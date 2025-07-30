@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import styled from 'styled-components';
 
 import CartFoot from "../Cart/CartFoot";
 import {
@@ -92,6 +93,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import GiftCard from "./GiftCard"; // Import the new GiftCard component
 
 const Payment = () => {
   const navigate = useNavigate();
@@ -99,11 +101,24 @@ const Payment = () => {
   const [cardHolder, setCardHolder] = useState("Your Full Name");
   const [expireMonthYear, setExpireMonthYear] = useState("MM/YY");
   const [cvv, setCvv] = useState("CVV");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("credit-debit");
+  const [giftCardApplied, setGiftCardApplied] = useState(false);
+  const [giftCardDiscount, setGiftCardDiscount] = useState(0);
 
   const handleSubmit = (e) => {
     console.log("Hello");
     navigate("/ordersuccess");
   };
+
+  const handlePaymentMethodChange = (method) => {
+    setSelectedPaymentMethod(method);
+  };
+
+  const handleGiftCardApply = (amount) => {
+    setGiftCardApplied(true);
+    setGiftCardDiscount(amount);
+  };
+  
   const bagData = useSelector((state) => state.bag.bagData);
 
   let totalAmount = 0;
@@ -118,6 +133,39 @@ const Payment = () => {
   bagData?.map((e) => (totalMRP += Math.floor(Number(e.off_price))));
 
   let totalDiscount = totalMRP - totalAmount;
+  
+  // Calculate final total after gift card discount
+  const finalTotal = totalAmount - giftCardDiscount > 0 ? totalAmount - giftCardDiscount : 0;
+
+  // Fix the selection highlight for gift card
+  const getPaymentMethodColor = (method) => {
+    return selectedPaymentMethod === method ? "#ff3f6c" : "";
+  };
+  
+  const getPaymentMethodStyle = (method) => {
+    return {
+      backgroundColor: selectedPaymentMethod === method ? "#fff1f4" : "",
+      borderLeft: selectedPaymentMethod === method ? "5px solid #ff3f6c" : "",
+    };
+  };
+
+  // Styled component for payment method options
+  const PaymentMethodOption = styled.div`
+    background-color: ${props => props.selected ? "#fff1f4" : "#f5f5f6"};
+    border-left: ${props => props.selected ? "5px solid #ff3f6c" : "none"};
+    cursor: pointer;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+  `;
+  
+  // Icon color based on selection
+  const getIconColor = (method) => {
+    return selectedPaymentMethod === method ? "#ff3f6c" : "#777";
+  };
+
   return (
     <Container>
       <NavContainer>
@@ -201,79 +249,153 @@ const Payment = () => {
           <ChooseMode>Choose Payment Mode</ChooseMode>
           <PayemntMain>
             <PaymentMethods>
-              <CashOnDel>
-                <CurrencyRupeeOutlined sx={{ width: "25px", height: "25px" }} />
+              <PaymentMethodOption 
+                selected={selectedPaymentMethod === "cod"}
+                onClick={() => handlePaymentMethodChange("cod")}
+              >
+                <CurrencyRupeeOutlined sx={{ 
+                  width: "25px", 
+                  height: "25px",
+                  color: getIconColor("cod")
+                }} />
                 <Cod>Cash On Delivery</Cod>
-              </CashOnDel>
-              <CardCDdiv>
+              </PaymentMethodOption>
+              
+              <PaymentMethodOption 
+                selected={selectedPaymentMethod === "credit-debit"}
+                onClick={() => handlePaymentMethodChange("credit-debit")}
+              >
                 <CreditCardOutlined
-                  sx={{ width: "25px", height: "25px", color: "#ff3f6c" }}
+                  sx={{ 
+                    width: "25px", 
+                    height: "25px", 
+                    color: getIconColor("credit-debit") 
+                  }}
                 />
                 <CardCD>Credit/Debit Card</CardCD>
-              </CardCDdiv>
-              <Upidiv>
-                <QrCodeScanner sx={{ width: "25px", height: "25px" }} />
+              </PaymentMethodOption>
+              
+              <PaymentMethodOption 
+                selected={selectedPaymentMethod === "upi"}
+                onClick={() => handlePaymentMethodChange("upi")}
+              >
+                <QrCodeScanner sx={{ 
+                  width: "25px", 
+                  height: "25px",
+                  color: getIconColor("upi")
+                }} />
                 <Upi>GooglePay/PhonePay/Upi</Upi>
-              </Upidiv>
-              <Walletdiv>
+              </PaymentMethodOption>
+              
+              <PaymentMethodOption 
+                selected={selectedPaymentMethod === "wallet"}
+                onClick={() => handlePaymentMethodChange("wallet")}
+              >
                 <AccountBalanceWalletOutlined
-                  sx={{ width: "25px", height: "25px" }}
+                  sx={{ 
+                    width: "25px", 
+                    height: "25px",
+                    color: getIconColor("wallet")
+                  }}
                 />
                 <Wallet>Paytm/Payzapp/Wallets</Wallet>
-              </Walletdiv>
-              <NetBankdiv>
+              </PaymentMethodOption>
+              
+              <PaymentMethodOption 
+                selected={selectedPaymentMethod === "netbanking"}
+                onClick={() => handlePaymentMethodChange("netbanking")}
+              >
                 <AccountBalanceOutlined
-                  sx={{ width: "25px", height: "25px" }}
+                  sx={{ 
+                    width: "25px", 
+                    height: "25px",
+                    color: getIconColor("netbanking")
+                  }}
                 />
                 <NetBank>Net Banking</NetBank>
-              </NetBankdiv>
-              <Emidiv>
-                <PaymentsOutlined sx={{ width: "25px", height: "25px" }} />
+              </PaymentMethodOption>
+              
+              <PaymentMethodOption 
+                selected={selectedPaymentMethod === "emi"}
+                onClick={() => handlePaymentMethodChange("emi")}
+              >
+                <PaymentsOutlined sx={{ 
+                  width: "25px", 
+                  height: "25px",
+                  color: getIconColor("emi")
+                }} />
                 <Emi>EMI/Pay Later</Emi>
-              </Emidiv>
+              </PaymentMethodOption>
+              
+              <PaymentMethodOption 
+                selected={selectedPaymentMethod === "giftcard"}
+                onClick={() => handlePaymentMethodChange("giftcard")}
+              >
+                <CardGiftcard sx={{ 
+                  width: "25px", 
+                  height: "25px", 
+                  color: getIconColor("giftcard") 
+                }} />
+                <Emi>Gift Card</Emi>
+              </PaymentMethodOption>
             </PaymentMethods>
-            <PaymentMethodsInput onSubmit={handleSubmit}>
-              <ChooseMode>CREDIT/DEBIT CARD</ChooseMode>
-              <CardNumber
-                placeholder="Card Number"
-                onChange={(e) => e.target.value}
-                pattern={"^[0-9]{12}$"}
-                maxlength="4"
-                required
-              />
-              <CardName
-                placeholder="Name On card"
-                onChange={(e) => e.target.value}
-                pattern={"^[A-Za-z]{5,16}$"}
-                required
-              />
-              <ExpiryCvv>
-                <Expiry
-                  type="month/year"
-                  placeholder="Valid Thru (MM/YY)"
+            
+            {selectedPaymentMethod === "credit-debit" && (
+              <PaymentMethodsInput onSubmit={handleSubmit}>
+                <ChooseMode>CREDIT/DEBIT CARD</ChooseMode>
+                <CardNumber
+                  placeholder="Card Number"
                   onChange={(e) => e.target.value}
-                  pattern={"^[0-9]{4}$"}
-                  maxlength={4}
+                  pattern={"^[0-9]{12}$"}
+                  maxlength="4"
                   required
                 />
-                <Cvv
-                  type="number"
-                  placeholder="CVV"
+                <CardName
+                  placeholder="Name On card"
                   onChange={(e) => e.target.value}
-                  pattern={"^[0-9]{03}$"}
-                  maxlength={3}
+                  pattern={"^[A-Za-z]{5,16}$"}
                   required
                 />
-              </ExpiryCvv>
-              <PayNowButton type="submit" />
-            </PaymentMethodsInput>
+                <ExpiryCvv>
+                  <Expiry
+                    type="month/year"
+                    placeholder="Valid Thru (MM/YY)"
+                    onChange={(e) => e.target.value}
+                    pattern={"^[0-9]{4}$"}
+                    maxlength={4}
+                    required
+                  />
+                  <Cvv
+                    type="number"
+                    placeholder="CVV"
+                    onChange={(e) => e.target.value}
+                    pattern={"^[0-9]{03}$"}
+                    maxlength={3}
+                    required
+                  />
+                </ExpiryCvv>
+                <PayNowButton type="submit" />
+              </PaymentMethodsInput>
+            )}
+            
+            {selectedPaymentMethod === "giftcard" && (
+              <GiftCard onApply={handleGiftCardApply} totalAmount={totalAmount} />
+            )}
+            
+            {selectedPaymentMethod !== "credit-debit" && selectedPaymentMethod !== "giftcard" && (
+              <PaymentMethodsInput onSubmit={handleSubmit}>
+                <ChooseMode>{selectedPaymentMethod.toUpperCase().replace("-", " ")}</ChooseMode>
+                <p>Payment method details would be here</p>
+                <PayNowButton type="submit" />
+              </PaymentMethodsInput>
+            )}
           </PayemntMain>
           <HaveGift>
             <Giftleft>
               <CardGiftcard sx={{ width: "25px", height: "25px" }} />
               <HaveGiftLabel>Have a Gift Card?</HaveGiftLabel>
             </Giftleft>
-            <GiftRight>APPLY GIFT CARD</GiftRight>
+            <GiftRight onClick={() => handlePaymentMethodChange("giftcard")}>APPLY GIFT CARD</GiftRight>
           </HaveGift>
         </PaymentLeft>
 
@@ -294,6 +416,12 @@ const Payment = () => {
               <CoupDis>Coupon Discount</CoupDis>
               <CoupDisrs>Apply Coupon</CoupDisrs>
             </CoupDisDiv>
+            {giftCardApplied && (
+              <DmrpDiv>
+                <Dmrp>Gift Card Discount</Dmrp>
+                <Dmrprs>-₹{giftCardDiscount}</Dmrprs>
+              </DmrpDiv>
+            )}
             <CoviFeediv>
               <CoviFee>Convenience Fee</CoviFee>
               <CoviFeeKM>Know More</CoviFeeKM>
@@ -303,7 +431,7 @@ const Payment = () => {
           <TotalPriceDiv>
             <TotalAmountdiv>
               <TotalAmount>Total Amount</TotalAmount>
-              <TotalAmountrs>₹{totalAmount}</TotalAmountrs>
+              <TotalAmountrs>₹{finalTotal}</TotalAmountrs>
             </TotalAmountdiv>
           </TotalPriceDiv>
         </FormRightDiv>
@@ -315,3 +443,4 @@ const Payment = () => {
 };
 
 export default Payment;
+

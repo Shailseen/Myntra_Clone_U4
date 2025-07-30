@@ -15,6 +15,9 @@ import CategoriesToBag from "./CategoriesToBag";
 import DealOftheDayCard from "./DealOftheDayCard";
 import { SlideShow } from "./Slider";
 import TopPicks from "./TopPicks";
+import { products } from "../../data/products"; // <-- import your mock products
+import { addToCart } from "../../redux/cartSlice"; // <-- if using redux cartSlice for add to cart
+
 const divStyle = {
   textAlign: "start",
   letterSpacing: ".15em",
@@ -82,6 +85,56 @@ function InnerContent() {
   }, [dispatch]);
   return (
     <div>
+      {/* Add this block at the top to show mock products */}
+      <div
+        style={{
+          textAlign: "start",
+          letterSpacing: ".15em",
+          textTransform: "uppercase",
+          color: "#3e4152",
+          fontSize: "1.8em",
+          margin: "50px 0 10px 30px",
+          fontWeight: "500",
+        }}
+      >
+        <h4>FEATURED PRODUCTS</h4>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          gap: 24,
+          marginLeft: 30,
+          marginBottom: 30,
+        }}
+      >
+        {products &&
+          products.map((product) => (
+            <div
+              key={product.id}
+              style={{
+                border: "1px solid #eee",
+                padding: 16,
+                width: 220,
+              }}
+            >
+              <img
+                src={product.image}
+                alt={product.name}
+                style={{
+                  width: "100%",
+                  height: 120,
+                  objectFit: "contain",
+                }}
+              />
+              <h4>{product.name}</h4>
+              <p>{product.description}</p>
+              <div>₹{product.price}</div>
+              <button onClick={() => dispatch(addToCart(product))}>
+                Add to Cart
+              </button>
+            </div>
+          ))}
+      </div>
       <SlideShow />
       <div>
         <div style={divStyle}>
