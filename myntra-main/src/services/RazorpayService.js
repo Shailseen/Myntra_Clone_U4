@@ -3,8 +3,21 @@
 // Replace this with your actual Razorpay test key
 const API_KEY = "rzp_test_YourTestKeyHere";
 
-// Reference number counter for sequential API calls
-let refNoCounter = 1;
+function getRandomString(minLength = 8, maxLength = 10) {
+  // Determine a random length between min and max
+  const length = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;
+  
+  // Generate random string
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  
+  return result;
+}
+
 
 export const initializeRazorpay = () => {
   return new Promise((resolve) => {
@@ -20,8 +33,7 @@ export const initializeRazorpay = () => {
 export const makeWoohooPaymentXHR = async () => {
   return new Promise((resolve, reject) => {
     try {
-      const refNo = `Whd-${1313123121 + refNoCounter}`;
-      refNoCounter++;
+      const refNo = getRandomString();
 
       console.log("Making XHR payment with reference number:", refNo);
 
