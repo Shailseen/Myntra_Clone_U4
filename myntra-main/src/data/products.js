@@ -20,7 +20,7 @@ export const products = [
     id: 3,
     name: "Puma Running Shoes",
     description: "Lightweight running shoes for men",
-    price: 1,
+    price: 10,
     image: "https://assets.myntassets.com/dpr_2,q_60,w_210,c_limit,fl_progressive/assets/images/34788835/2025/7/28/2ca49e59-3cc3-40f6-89d2-28c2265ec9421753689082574-Puma-Softride-Pro-Dynamic-Flex-Men-Comfort-Walking-Shoes-492-1.jpg",
     category: "shoes"
   },

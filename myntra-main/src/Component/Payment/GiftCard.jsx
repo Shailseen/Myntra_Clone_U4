@@ -749,43 +749,6 @@ const DummyCCAvenue = styled.div`
       {isLoading && <p>Loading gift cards...</p>}
       {error && <p style={{ color: 'red' }}>Error: {error}. Using default gift cards.</p>}
 
-      {/* Render "add amount" gift cards first */}
-      {addAmountGiftCards && addAmountGiftCards.length > 0 && (
-        <GiftCardList>
-          {addAmountGiftCards.map(card => (
-            <GiftCardItem key={card.id}>
-              <CardImage color={card.color}>
-                <CardGiftcard sx={{ fontSize: 20, color: '#ff3f6c' }} />
-              </CardImage>
-              <CardContent>
-                <CardInfo>
-                  <CardName>{card.name}</CardName>
-                </CardInfo>
-                <CardOffers>
-                  {card.offers.map((offer, index) => (
-                    <OfferItem key={index}>
-                      <LocalOfferOutlined sx={{ fontSize: 10, color: '#ff3f6c', marginTop: "2px" }} />
-                      <span>{offer}</span>
-                    </OfferItem>
-                  ))}
-                </CardOffers>
-                <DiscountPreview>
-                  Add ₹{card.value} more to your cart to unlock this gift card!
-                </DiscountPreview>
-                <NetPayablePreview>
-                  Minimum order: ₹{card.minAmount}
-                </NetPayablePreview>
-              </CardContent>
-              <CardActions>
-                <CardApplyButton disabled>
-                  APPLY
-                </CardApplyButton>
-              </CardActions>
-            </GiftCardItem>
-          ))}
-        </GiftCardList>
-      )}
-
       {/* Render available gift cards */}
       {!appliedCard ? (
         <>
@@ -808,7 +771,7 @@ const DummyCCAvenue = styled.div`
                       </OfferItem>
                     ))}
                   </CardOffers>
-                  <DiscountPreview>You save: ₹{Math.min(card.value, totalAmount)}</DiscountPreview>
+                  <DiscountPreview>You save: ₹{Math.min(card.value, totalAmount).toFixed(2)}</DiscountPreview>
                   <NetPayablePreview>Net payable: ₹{Math.max(0, totalAmount - card.value)}</NetPayablePreview>
                 </CardContent>
                 <CardActions>
@@ -825,10 +788,8 @@ const DummyCCAvenue = styled.div`
           </GiftCardList>
           {successMessage && <SuccessMessage>{successMessage}</SuccessMessage>}
           
-          {/* Add disabled PAY NOW button */}
-          <PayNowButton disabled={true}>
-            PAY NOW
-          </PayNowButton>
+        
+        
         </>
       ) : (
         <>
@@ -870,7 +831,61 @@ const DummyCCAvenue = styled.div`
           </GiftCardApplied>
         </>
       )}
-      
+
+      {/* Render "add amount" gift cards first */}
+      {!appliedCard && addAmountGiftCards && addAmountGiftCards.length > 0 && (
+        <GiftCardList>
+          {addAmountGiftCards.map(card => (
+            <GiftCardItem key={card.id} style={{ backgroundColor: '#f5f5f6', '&:hover': {
+    borderColor: '#888', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'}}}>
+              <CardImage color={card.color}>
+                <CardGiftcard sx={{ fontSize: 20, color: '#ff3f6c' }} />
+              </CardImage>
+              <CardContent>
+                <CardInfo>
+                  <CardName>{card.name}</CardName>
+                </CardInfo>
+                <CardOffers>
+                  {card.offers.map((offer, index) => (
+                    <OfferItem key={index}>
+                      <LocalOfferOutlined sx={{ fontSize: 10, color: '#ff3f6c', marginTop: "2px" }} />
+                      <span>{offer}</span>
+                    </OfferItem>
+                  ))}
+                </CardOffers>
+                <DiscountPreview>
+                  Add ₹{card.value.toFixed(2)} more to your cart to unlock this gift card!
+                </DiscountPreview>
+                <NetPayablePreview>
+                  Minimum order: ₹{card.minAmount}
+                </NetPayablePreview>
+              </CardContent>
+              <CardActions>
+                <CardApplyButton disabled style={{ backgroundColor: '#888'}}>
+                  APPLY
+                </CardApplyButton>
+              </CardActions>
+            </GiftCardItem>
+          ))}
+        </GiftCardList>
+      )}
+
+      {addAmountGiftCards.length > 0 || availableCards.length > 0 ? (
+        <PayNowButton disabled={true}>
+            PAY NOW
+          </PayNowButton>
+      ) : (
+        // add a condition if isLoading then this will not render
+        <>
+          {isLoading && (
+            // show a message no gift cards available
+            <p style={{ color: '#ff3f6c', fontWeight: 'bold', textAlign: 'center' }}>
+              No gift cards available.
+            </p>
+          )}
+        </>
+      )}
+
       {/* Payment iframe overlay */}
       {showPaymentIframe && (
         <PaymentIframeContainer>
