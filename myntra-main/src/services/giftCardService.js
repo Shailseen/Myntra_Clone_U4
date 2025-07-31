@@ -82,7 +82,7 @@ export const applyGiftCard = async (cardId, orderId) => {
       const card = mockGiftCards.find(card => card.id === cardId);
       resolve({
         success: true,
-        message: `Gift card of ₹${card.value} applied successfully!`,
+        message: `Gift carde of ₹${card.value} applied successfully!`,
         appliedAmount: card.value
       });
     }, 300);

@@ -11,7 +11,6 @@ import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import { useDispatch, useSelector } from "react-redux";
 import { rootShouldForwardProp } from "@mui/material/styles/styled";
 import { getDealsOftheData } from "../../redux/Home/actions";
-import { useSelect } from "@mui/base";
 import DealOftheDayCard from "../Home/DealOftheDayCard";
 import Badge from "@mui/material/Badge";
 import MailIcon from "@mui/icons-material/Mail";

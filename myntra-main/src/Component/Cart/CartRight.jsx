@@ -87,7 +87,7 @@ const CartRightS = ({ totalItems, totalAmount: propTotalAmount }) => {
         {giftCard && (
           <DmrpDiv>
             <Dmrp>Gift Card Discount</Dmrp>
-            <Dmrprs>-₹{giftCard.value}</Dmrprs>
+            <Dmrprs>-₹{giftCard.value.toFixed(2)}</Dmrprs>
           </DmrpDiv>
         )}
         <CoviFeediv>

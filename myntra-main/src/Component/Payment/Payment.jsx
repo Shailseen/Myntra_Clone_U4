@@ -124,6 +124,7 @@ const Payment = () => {
   
   // Gift card state from Redux
   const [giftCardApplied, setGiftCardApplied] = useState(!!giftCard);
+  const [appliedGiftCard, setAppliedGiftCard] = useState(null);
   const [giftCardDiscount, setGiftCardDiscount] = useState(giftCard ? giftCard.value : 0);
   
   // Add fallback logic if bagData is empty
@@ -347,9 +348,10 @@ const Payment = () => {
     setSelectedPaymentMethod(method);
   };
 
-  const handleGiftCardApply = (amount) => {
+  const handleGiftCardApply = (amount, card) => {
     setGiftCardApplied(true);
-    setGiftCardDiscount(parseInt(amount));
+    setGiftCardDiscount(parseFloat(amount));
+    setAppliedGiftCard(card || null);
   };
   
   // Fix the payment methods with proper labels
@@ -535,7 +537,7 @@ const Payment = () => {
             
             {selectedPaymentMethod === "giftcard" && (
               <GiftCard 
-                onApply={handleGiftCardApply} 
+                onApply={(amount, card) => handleGiftCardApply(amount, card)} 
                 totalAmount={totalAmount}
                 availableCards={availableGiftCards}
                 isLoading={isLoadingGiftCards}
@@ -579,10 +581,11 @@ const Payment = () => {
               <CoupDis>Coupon Discount</CoupDis>
               <CoupDisrs>Apply Coupon</CoupDisrs>
             </CoupDisDiv>
+            {/* Show gift card discount if applied */}
             {giftCardApplied && giftCardDiscount > 0 && (
               <DmrpDiv>
                 <Dmrp>Gift Card Discount</Dmrp>
-                <Dmrprs>-₹{giftCardDiscount}</Dmrprs>
+                <Dmrprs>₹{giftCardDiscount.toFixed(2)}</Dmrprs>
               </DmrpDiv>
             )}
             <CoviFeediv>

@@ -538,14 +538,9 @@ const GiftCard = ({
   };
 
   const handleApply = (card) => {
-    // Set success message and apply discount
-    setSuccessMessage(`Gift card of ₹${card.value} applied successfully!`);
-    
-    // Store the applied card info
     setAppliedCard(card);
-    
-    // Notify parent component
-    onApply(card.value);
+    setSuccessMessage(`Gift cards of ₹${card.value} applied successfully!`);
+    if (onApply) onApply(card.value, card); // Pass both value and card
   };
 
   const handleRemove = () => {
@@ -795,7 +790,7 @@ const DummyCCAvenue = styled.div`
         </>
       ) : (
         <>
-          <SuccessMessage>Gift card of ₹{appliedCard.value} applied successfully!</SuccessMessage>
+          <SuccessMessage>Gift card of ₹{appliedCard.value.toFixed(2)} applied successfully!</SuccessMessage>
           <GiftCardApplied>
             <AppliedCardHeader>
               <CardTitle>
@@ -805,7 +800,7 @@ const DummyCCAvenue = styled.div`
               <RemoveButton onClick={handleRemove}>REMOVE</RemoveButton>
             </AppliedCardHeader>
             
-            <AmountApplied>₹{appliedCard.value} Applied</AmountApplied>
+            <AmountApplied>₹{appliedCard.value.toFixed(2)} Applied</AmountApplied>
             
             {/* Enhanced order summary */}
             <OrderSummary>
@@ -815,7 +810,7 @@ const DummyCCAvenue = styled.div`
               </SummaryRow>
               <SummaryRow highlight>
                 <span>Gift Card Discount:</span>
-                <span>-₹{Math.min(appliedCard.value, totalAmount)}</span>
+                <span>-₹{Math.min(appliedCard.value.toFixed(2), totalAmount)}</span>
               </SummaryRow>
               <SummaryRow bold highlight>
                 <span>Net Payable:</span>
