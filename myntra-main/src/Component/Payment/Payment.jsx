@@ -106,6 +106,7 @@ const Payment = () => {
   const [cvv, setCvv] = useState("CVV");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("credit-debit");
   const [availableGiftCards, setAvailableGiftCards] = useState([]);
+  const [addAmountGiftCards, setAddAmountGiftCards] = useState([]);
   const [isLoadingGiftCards, setIsLoadingGiftCards] = useState(true);
   const [giftCardError, setGiftCardError] = useState(null);
 
@@ -244,6 +245,49 @@ const Payment = () => {
     
     // Call the fetch function
     fetchGiftCards();
+
+    // New: Fetch "add amount" gift cards
+    const fetchAddAmountGiftCards = async () => {
+      try {
+        const apiUrl = 'http://localhost:5000/api/giftcards/search';
+        // Example: ask for cards with higher value than totalAmount
+        const payload = {
+          "amount": totalAmount + 1000, // or any logic to get higher value cards
+          "code": "Amazon"
+        };
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.hits && data.hits.hits && Array.isArray(data.hits.hits)) {
+            // Filter cards that require more than current totalAmount
+            const addCards = data.hits.hits
+              .filter(hit => (hit.sort || 0) > totalAmount)
+              .map((hit, index) => {
+                const source = hit._source || {};
+                return {
+                  id: hit._id || `addapi-${index}`,
+                  name: source.name || 'Gift Card',
+                  value: Math.abs((hit.sort || 0) - totalAmount),
+                  code: source.id || `GC-${index + 2000}`,
+                  color: ['#f0e9ff', '#e0f7fa', '#fffde7', '#fce4ec'][index % 4],
+                  offers: [
+                    `${source.description?.substring(0, 15) || 'Gift Card'}`
+                  ],
+                  minAmount: hit.sort || 0
+                };
+              });
+            setAddAmountGiftCards(addCards);
+          }
+        }
+      } catch (err) {
+        setAddAmountGiftCards([]);
+      }
+    };
+    fetchAddAmountGiftCards();
   }, [totalAmount]); // Re-fetch when total amount changes
 
   const handleSubmit = (e) => {
@@ -491,7 +535,8 @@ const Payment = () => {
                 availableCards={availableGiftCards}
                 isLoading={isLoadingGiftCards}
                 error={giftCardError}
-                skipFetch={true} // Tell GiftCard component not to fetch again
+                skipFetch={true}
+                addAmountGiftCards={addAmountGiftCards} // Pass new prop
               />
             )}
             

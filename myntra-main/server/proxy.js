@@ -59,21 +59,50 @@ app.post('/api/giftcards/search', async (req, res) => {
   try {
     console.log('➡️ Proxy server received request for gift card search');
     console.log('Request payload:', req.body);
-    
-    // Forward the request to the actual gift card API
-    const response = await axios.post('http://15.207.173.77:8000/products/search', req.body, {
+
+    // Call /products/search
+    const searchResponse = await axios.post('http://15.207.173.77:8000/products/search', req.body, {
       headers: {
         'Content-Type': 'application/json'
       }
     });
-    
-    console.log('Gift card API response:', response.data.hits.hits);
-    
-    // Return the API response to the frontend
-    res.json(response.data);
+
+    // Call /products/suggestion
+    const suggestionResponse = await axios.post('http://15.207.173.77:8000/products/suggestion', req.body, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    // Mark suggestion hits with a flag
+    const searchHits = (searchResponse.data?.hits?.hits || []).map(hit => ({
+      ...hit,
+      _isSuggestion: false
+    }));
+    const suggestionHits = (suggestionResponse.data?.hits?.hits || []).map(hit => ({
+      ...hit,
+      _isSuggestion: true
+    }));
+
+    // Combine: search hits first, then suggestion hits
+    const combinedHits = [...searchHits, ...suggestionHits];
+
+    // Clone the search response and replace hits.hits with combinedHits
+    const combinedResponse = {
+      ...searchResponse.data,
+      hits: {
+        ...searchResponse.data.hits,
+        hits: combinedHits
+      }
+    };
+
+    console.log('Combined gift card API hits:', combinedHits.length);
+
+    // Return the combined response to the frontend
+    res.json(combinedResponse);
   } catch (error) {
     console.error('Error proxying to gift card API:', error.message);
-    
+
     // Send error details back to client
     res.status(500).json({
       error: 'Proxy server error',

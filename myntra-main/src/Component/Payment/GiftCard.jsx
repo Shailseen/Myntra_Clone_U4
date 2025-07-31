@@ -383,7 +383,8 @@ const GiftCard = ({
   availableCards: propCards, 
   isLoading: propIsLoading, 
   error: propError,
-  skipFetch = false 
+  skipFetch = false,
+  addAmountGiftCards = [] // New prop
 }) => {
   const navigate = useNavigate();
   const [giftCardCode, setGiftCardCode] = useState('');
@@ -620,10 +621,47 @@ const GiftCard = ({
   return (
     <GiftCardContainer>
       <GiftCardHeader>GIFT CARD</GiftCardHeader>
-      
       {isLoading && <p>Loading gift cards...</p>}
       {error && <p style={{ color: 'red' }}>Error: {error}. Using default gift cards.</p>}
-      
+
+      {/* Render "add amount" gift cards first */}
+      {addAmountGiftCards && addAmountGiftCards.length > 0 && (
+        <GiftCardList>
+          {addAmountGiftCards.map(card => (
+            <GiftCardItem key={card.id}>
+              <CardImage color={card.color}>
+                <CardGiftcard sx={{ fontSize: 20, color: '#ff3f6c' }} />
+              </CardImage>
+              <CardContent>
+                <CardInfo>
+                  <CardName>{card.name}</CardName>
+                </CardInfo>
+                <CardOffers>
+                  {card.offers.map((offer, index) => (
+                    <OfferItem key={index}>
+                      <LocalOfferOutlined sx={{ fontSize: 10, color: '#ff3f6c', marginTop: "2px" }} />
+                      <span>{offer}</span>
+                    </OfferItem>
+                  ))}
+                </CardOffers>
+                <DiscountPreview>
+                  Add ₹{card.value} more to your cart to unlock this gift card!
+                </DiscountPreview>
+                <NetPayablePreview>
+                  Minimum order: ₹{card.minAmount}
+                </NetPayablePreview>
+              </CardContent>
+              <CardActions>
+                <CardApplyButton disabled>
+                  APPLY
+                </CardApplyButton>
+              </CardActions>
+            </GiftCardItem>
+          ))}
+        </GiftCardList>
+      )}
+
+      {/* Render available gift cards */}
       {!appliedCard ? (
         <>
           <GiftCardList>
@@ -649,7 +687,11 @@ const GiftCard = ({
                   <NetPayablePreview>Net payable: ₹{Math.max(0, totalAmount - card.value)}</NetPayablePreview>
                 </CardContent>
                 <CardActions>
-                  <CardApplyButton onClick={() => handleApply(card)}>
+                  <CardApplyButton
+                    onClick={() => handleApply(card)}
+                    disabled={card._isSuggestion === true}
+                    style={card._isSuggestion ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+                  >
                     APPLY
                   </CardApplyButton>
                 </CardActions>
