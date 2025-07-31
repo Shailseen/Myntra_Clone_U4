@@ -105,6 +105,9 @@ const Payment = () => {
   const [expireMonthYear, setExpireMonthYear] = useState("MM/YY");
   const [cvv, setCvv] = useState("CVV");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("credit-debit");
+  const [availableGiftCards, setAvailableGiftCards] = useState([]);
+  const [isLoadingGiftCards, setIsLoadingGiftCards] = useState(true);
+  const [giftCardError, setGiftCardError] = useState(null);
 
   // Get fresh data directly from Redux store
   const cartItems = useSelector(selectCartItems);
@@ -118,6 +121,30 @@ const Payment = () => {
   // Gift card state from Redux
   const [giftCardApplied, setGiftCardApplied] = useState(!!giftCard);
   const [giftCardDiscount, setGiftCardDiscount] = useState(giftCard ? giftCard.value : 0);
+  
+  // Add fallback logic if bagData is empty
+  const bagData = useSelector((state) => state.bag.bagData);
+  
+  // Calculate totals first, so they can be used by useEffect hooks later
+  let totalMRP = 0;
+  let totalAmount = 0;
+
+  // Check if bagData has items
+  if (bagData && bagData.length > 0) {
+    bagData.forEach((e) => {
+      totalMRP += Math.floor(Number(e.off_price || 0));
+      totalAmount += Math.floor(Number(e.off_price) * ((100 - Number(e.discount)) / 100));
+    });
+  } else {
+    // Fallback to cartTotal if bagData is empty
+    totalMRP = cartTotal || 0;
+    totalAmount = finalTotal || cartTotal || 0;
+  }
+
+  let totalDiscount = totalMRP - totalAmount;
+  
+  // Calculate the final amount after gift card discount
+  const calculatedFinalTotal = Math.max(0, totalAmount - giftCardDiscount);
 
   // Effect to sync with Redux gift card state
   useEffect(() => {
@@ -129,6 +156,95 @@ const Payment = () => {
       setGiftCardDiscount(0);
     }
   }, [giftCard]);
+
+  // Fetch gift cards when component mounts (page loads)
+  useEffect(() => {
+    const fetchGiftCards = async () => {
+      setIsLoadingGiftCards(true);
+      setGiftCardError(null);
+      
+      try {
+        console.log("Fetching gift cards on payment page load...");
+        
+        // Try to use the proxy server API call
+        const apiUrl = 'http://localhost:5000/api/giftcards/search';
+        
+        const payload = {
+          "amount": totalAmount,
+          "code": "Amazon"  // Empty code to get all available cards
+        };
+        
+        console.log("Sending gift card request with payload:", payload);
+        
+        try {
+          // First test if the proxy server is available
+          const testResponse = await fetch('http://localhost:5000/api/test');
+          if (!testResponse.ok) {
+            throw new Error('Proxy server test failed');
+          }
+          
+          // If test is successful, proceed with the actual API call
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+          });
+          
+          if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          console.log("Gift card API response on page load:", data);
+          
+          // Process the API response
+          if (data && data.hits && data.hits.hits && Array.isArray(data.hits.hits)) {
+            if (data.hits.hits.length > 0) {
+              // Transform API data to gift card format
+              const apiCards = data.hits.hits.map((hit, index) => {
+                const source = hit._source || {};
+                return {
+                  id: hit._id || `api-${index}`,
+                  name: source.name || 'Gift Card',
+                  value: Math.abs(totalAmount - hit.sort || 100),
+                  code: source.id || `GC-${index + 1000}`,
+                  color: ['#ffeae9', '#fff1e0', '#e9f7ff', '#edfff0'][index % 4],
+                  offers: [
+                    `${source.description?.substring(0, 15) || 'Gift Card'}`
+                  ]
+                };
+              });
+              
+              setAvailableGiftCards(apiCards);
+              console.log("Using API gift cards:", apiCards);
+            } else {
+              console.log("No gift cards found in API response, using mock data");
+              setAvailableGiftCards(mockGiftCards);
+            }
+          } else {
+            console.log("Unexpected API response format, using mock data");
+            setAvailableGiftCards(mockGiftCards);
+          }
+        } catch (apiError) {
+          console.error("API call failed:", apiError);
+          console.log("Falling back to mock gift card data");
+          setAvailableGiftCards(mockGiftCards);
+        }
+      } catch (err) {
+        console.error("Error in gift card fetch process:", err);
+        setGiftCardError(err.message);
+        // Fall back to mock cards on error
+        setAvailableGiftCards(mockGiftCards);
+      } finally {
+        setIsLoadingGiftCards(false);
+      }
+    };
+    
+    // Call the fetch function
+    fetchGiftCards();
+  }, [totalAmount]); // Re-fetch when total amount changes
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -187,26 +303,6 @@ const Payment = () => {
     setGiftCardDiscount(parseInt(amount));
   };
   
-  const bagData = useSelector((state) => state.bag.bagData);
-
-  // Add fallback logic if bagData is empty
-  let totalAmount = 0;
-  let totalMRP = 0;
-
-  // Check if bagData has items
-  if (bagData && bagData.length > 0) {
-    bagData.forEach((e) => {
-      totalMRP += Math.floor(Number(e.off_price || 0));
-      totalAmount += Math.floor(Number(e.off_price) * ((100 - Number(e.discount)) / 100));
-    });
-  } else {
-    // Fallback to cartTotal if bagData is empty
-    totalMRP = cartTotal || 0;
-    totalAmount = finalTotal || cartTotal || 0;
-  }
-
-  let totalDiscount = totalMRP - totalAmount;
-  
   // Fix the payment methods with proper labels
   const paymentMethods = [
     { id: "cod", label: "Cash On Delivery", icon: CurrencyRupeeOutlined },
@@ -218,9 +314,6 @@ const Payment = () => {
     { id: "giftcard", label: "Gift Card", icon: CardGiftcard }
   ];
 
-  // Calculate the final amount after gift card discount
-  const calculatedFinalTotal = Math.max(0, totalAmount - giftCardDiscount);
-  
   // Icon color based on selection
   const getIconColor = (method) => {
     return selectedPaymentMethod === method ? "#ff3f6c" : "#777";
@@ -395,6 +488,10 @@ const Payment = () => {
               <GiftCard 
                 onApply={handleGiftCardApply} 
                 totalAmount={totalAmount}
+                availableCards={availableGiftCards}
+                isLoading={isLoadingGiftCards}
+                error={giftCardError}
+                skipFetch={true} // Tell GiftCard component not to fetch again
               />
             )}
             
@@ -457,5 +554,53 @@ const Payment = () => {
     </Container>
   );
 };
+
+// Import the mock gift cards at the top of the file
+const mockGiftCards = [
+  { 
+    id: 'gc1', 
+    name: 'Birthday Gift Card', 
+    value: 500, 
+    code: 'MYN500', 
+    color: '#ffeae9',
+    offers: [
+      'Valid on all products',
+      'Minimum amount: 2000'
+    ]
+  },
+  {
+    id: 'gc2',
+    name: 'Anniversary Gift Card',
+    value: 1000,
+    code: 'MYN1000',
+    color: '#fff1e0',
+    offers: [
+      'Exclusive for premium users',
+      'Valid for 1 year'
+    ]
+  },
+  {
+    id: 'gc3',
+    name: 'Festival Gift Card',
+    value: 1500,
+    code: 'MYN1500',
+    color: '#e9f7ff',
+    offers: [
+      'Special festival discount',
+      'Non-refundable'
+    ]
+  },
+  {
+    id: 'gc4',
+    name: 'New Year Gift Card',
+    value: 2000,
+    code: 'MYN2000',
+    color: '#edfff0',
+    offers: [
+      'Welcome offer for new users',
+      'Minimum purchase of 3000'
+    ]
+  }
+];
 
 export default Payment;

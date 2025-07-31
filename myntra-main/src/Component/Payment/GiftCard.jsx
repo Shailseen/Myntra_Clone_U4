@@ -342,16 +342,42 @@ const mockGiftCards = [
   },
 ];
 
-const GiftCard = ({ onApply, totalAmount }) => {
+// Update the component to accept pre-fetched cards
+const GiftCard = ({ 
+  onApply, 
+  totalAmount, 
+  availableCards: propCards, 
+  isLoading: propIsLoading, 
+  error: propError,
+  skipFetch = false 
+}) => {
   const [giftCardCode, setGiftCardCode] = useState('');
   const [appliedCard, setAppliedCard] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
-  const [availableCards, setAvailableCards] = useState(mockGiftCards);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [availableCards, setAvailableCards] = useState(propCards || mockGiftCards);
+  const [isLoading, setIsLoading] = useState(propIsLoading !== undefined ? propIsLoading : true);
+  const [error, setError] = useState(propError);
 
-  // Fetch gift cards from API
+  // Update state when props change
   useEffect(() => {
+    if (propCards) {
+      setAvailableCards(propCards);
+    }
+    if (propIsLoading !== undefined) {
+      setIsLoading(propIsLoading);
+    }
+    if (propError !== undefined) {
+      setError(propError);
+    }
+  }, [propCards, propIsLoading, propError]);
+
+  // Fetch gift cards from API only if not already provided via props
+  useEffect(() => {
+    // Skip fetching if skipFetch is true or cards are provided via props
+    if (skipFetch || propCards) {
+      return;
+    }
+    
     const fetchGiftCards = async () => {
       setIsLoading(true);
       setError(null);
@@ -424,7 +450,7 @@ const GiftCard = ({ onApply, totalAmount }) => {
     };
     
     fetchGiftCards();
-  }, []);
+  }, [skipFetch, propCards, totalAmount]);
 
   const handleApplyCode = () => {
     if (!giftCardCode.trim()) return;
