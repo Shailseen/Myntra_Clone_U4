@@ -56,17 +56,16 @@ export const {
   removeGiftCard
 } = cartSlice.actions;
 
-export const selectCartItems = (state) => state.cart.items;
-export const selectCartTotal = (state) =>
-  state.cart.items.reduce((total, item) => total + item.price * (item.quantity || 1), 0);
-export const selectGiftCard = (state) => state.cart.giftCard;
+export const selectCartItems = (state) => state.cart?.items || [];
+export const selectCartTotal = (state) => {
+  const items = state.cart?.items || [];
+  return items.reduce((total, item) => total + (Number(item.price) * (Number(item.quantity) || 1)), 0);
+};
+export const selectGiftCard = (state) => state.cart?.giftCard || null;
 export const selectFinalTotal = (state) => {
-  const subtotal = state.cart.items.reduce(
-    (total, item) => total + item.price * (item.quantity || 1), 
-    0
-  );
-  const discount = state.cart.giftCard ? state.cart.giftCard.value : 0;
-  return Math.max(subtotal - discount, 0);
+  const cartTotal = selectCartTotal(state);
+  const giftCard = selectGiftCard(state);
+  return giftCard ? Math.max(0, cartTotal - giftCard.value) : cartTotal;
 };
 
 export default cartSlice.reducer;

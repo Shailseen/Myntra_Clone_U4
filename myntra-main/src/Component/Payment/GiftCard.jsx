@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { CardGiftcard, LocalOfferOutlined } from "@mui/icons-material";
+import { makeWoohooPaymentXHR } from '../../services/RazorpayService';
 
 // Styled components for GiftCard
 const GiftCardContainer = styled.div`
@@ -408,8 +409,14 @@ const GiftCard = ({ onApply, totalAmount }) => {
   // Add a function to handle payment
   const handlePayment = () => {
     if (appliedCard) {
-      // Navigate to order success page or process payment
-      window.location.href = "/ordersuccess";
+      makeWoohooPaymentXHR().then(result => {
+        if (result) {
+          console.log("Payment successful:", result.data);
+          // Navigate to order success page or process payment
+          // window.location.href = "/ordersuccess";
+        } else {
+          console.error("Payment failed");}
+      });
     }
   };
 

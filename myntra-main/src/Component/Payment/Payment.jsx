@@ -95,7 +95,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import GiftCard from "./GiftCard"; // Import the new GiftCard component
 import { selectCartItems, selectCartTotal, selectGiftCard, selectFinalTotal } from '../../redux/cartSlice';
-import { makeGiftCardPayment } from '../../services/RazorpayService';
+import { makeGiftCardPayment, makeWoohooPaymentXHR, testApiCallOnly } from '../../services/RazorpayService';
 
 const Payment = () => {
   const navigate = useNavigate();
@@ -133,6 +133,8 @@ const Payment = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    console.log("Payment submission started...");
+    
     // If using Razorpay for payments
     if (selectedPaymentMethod === "credit-debit") {
       const orderInfo = {
@@ -143,15 +145,36 @@ const Payment = () => {
         address: "Test Address"
       };
       
-      makeGiftCardPayment(
-        calculatedFinalTotal, // Use the calculated final total with gift card discount
-        orderInfo, 
-        () => navigate("/ordersuccess"),
-        (error) => console.error("Payment failed:", error),
-        "card"
-      );
+      console.log("Processing payment for amount:", calculatedFinalTotal);
+      
+      // Use testApiCallOnly to prevent automatic navigation
+      testApiCallOnly()
+        .then(result => {
+          console.log("API call result:", result);
+          // Don't navigate automatically - you can uncomment this when ready
+          // if (result.success) {
+          //   navigate("/ordersuccess");
+          // }
+        })
+        .catch(error => {
+          console.error("Payment failed:", error);
+        });
     } else {
-      navigate("/ordersuccess");
+      // For other payment methods, just make API call without navigation
+      makeWoohooPaymentXHR()
+        .then(result => {
+          console.log("Payment API response:", result);
+          // Don't navigate automatically - you can uncomment this when ready
+          // if (result.success) {
+          //   console.log("Payment successful!");
+          //   navigate("/ordersuccess");
+          // } else {
+          //   console.error("Payment failed:", result.error);
+          // }
+        })
+        .catch(error => {
+          console.error("Payment error:", error);
+        });
     }
   };
 
