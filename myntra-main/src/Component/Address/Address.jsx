@@ -66,11 +66,12 @@ import {
 } from "../Cart/CartRight.element";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { selectCartItems } from "../../redux/cartSlice";
+import { selectCartItems, selectGiftCard, selectFinalTotal } from "../../redux/cartSlice";
 const Address = () => {
   const navigate = useNavigate();
   const cartItems = useSelector(selectCartItems);
-
+  const giftCard = useSelector(selectGiftCard);
+  const finalTotal = useSelector(selectFinalTotal);
   let totalAmount = 0;
   cartItems?.forEach(
     (e) =>
@@ -152,6 +153,12 @@ toast.success("Address Added SuccessFully")
               <CoupDis>Coupon Discount</CoupDis>
               <CoupDisrs>Apply Coupon</CoupDisrs>
             </CoupDisDiv>
+            {giftCard && (
+              <DmrpDiv>
+                <Dmrp>Gift Card Discount</Dmrp>
+                <Dmrprs>-₹{giftCard.value}</Dmrprs>
+              </DmrpDiv>
+            )}
             <CoviFeediv>
               <CoviFee>Convenience Fee</CoviFee>
               <CoviFeeKM>Know More</CoviFeeKM>
@@ -161,7 +168,7 @@ toast.success("Address Added SuccessFully")
           <TotalPriceDiv>
             <TotalAmountdiv>
               <TotalAmount>Total Amount</TotalAmount>
-              <TotalAmountrs>₹{totalAmount}</TotalAmountrs>
+              <TotalAmountrs>₹{giftCard ? finalTotal : totalAmount}</TotalAmountrs>
             </TotalAmountdiv>
             <PlaceorderDiv>
               <PlaceorderButton onClick={goToPayment}>

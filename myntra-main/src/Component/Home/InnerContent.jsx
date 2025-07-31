@@ -59,6 +59,8 @@ const addToCartButtonStyle = {
   },
 };
 
+const API_BASE_URL = process.env.REACT_APP_BACKEND_API;
+
 function InnerContent() {
   const dealsOftheDay = useSelector((state) => state.home.dealsOftheDay);
   const bestofMyntra = useSelector((state) => state.home.bestOfMyntra);
@@ -92,7 +94,7 @@ function InnerContent() {
       .then((res) => res.json())
       .then((res) => dispatch(getCategoriesData(res)))
       .catch((e) => console.log(e));
-    fetch(`http://localhost:5000/categoriesToBag`)
+    fetch(`${API_BASE_URL}/categoriesToBag`)
       .then((res) => res.json())
       .then((res) => dispatch(getCategoriesData(res)))
       .catch((e) => console.log(e));

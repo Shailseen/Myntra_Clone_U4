@@ -18,6 +18,8 @@ function getRandomString(minLength = 8, maxLength = 10) {
   return result;
 }
 
+// Use environment variable for backend API base URL
+const API_BASE_URL = process.env.REACT_APP_BACKEND_API;
 
 export const initializeRazorpay = () => {
   return new Promise((resolve) => {
@@ -42,7 +44,7 @@ export const makeWoohooPaymentXHR = async () => {
 
       if (useProxy) {
         // Change to use your local proxy server
-        const API_URL = 'http://localhost:5000/api/woohoo/orders';
+        const API_URL = `${API_BASE_URL}/api/woohoo/orders`;
 
         const xhr = new XMLHttpRequest();
         xhr.open('POST', API_URL, true);

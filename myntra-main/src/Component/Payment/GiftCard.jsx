@@ -4,6 +4,8 @@ import { CardGiftcard, LocalOfferOutlined } from "@mui/icons-material";
 import { makeWoohooPaymentXHR } from '../../services/RazorpayService';
 import { useNavigate } from 'react-router-dom';
 
+const API_BASE_URL = process.env.REACT_APP_BACKEND_API;
+
 // Styled components for GiftCard
 const GiftCardContainer = styled.div`
   padding: 20px;
@@ -430,7 +432,7 @@ const GiftCard = ({
         
         console.log("Fetching gift cards via proxy server...");
         
-        const apiUrl = 'http://localhost:5000/api/giftcards/search';
+        const apiUrl = `${API_BASE_URL}/api/giftcards/search`;
         
         // Updated to use totalAmount from props instead of hardcoded value
         const payload = {
@@ -870,7 +872,7 @@ const DummyCCAvenue = styled.div`
         </GiftCardList>
       )}
 
-      {addAmountGiftCards.length > 0 || availableCards.length > 0 ? (
+      {!appliedCard && (addAmountGiftCards.length > 0 || availableCards.length > 0) ? (
         <PayNowButton disabled={true}>
             PAY NOW
           </PayNowButton>

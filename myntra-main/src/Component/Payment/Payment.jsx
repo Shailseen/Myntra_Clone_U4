@@ -97,6 +97,9 @@ import GiftCard from "./GiftCard"; // Import the new GiftCard component
 import { selectCartItems, selectCartTotal, selectGiftCard, selectFinalTotal } from '../../redux/cartSlice';
 import { makeGiftCardPayment, makeWoohooPaymentXHR, testApiCallOnly } from '../../services/RazorpayService';
 
+// Use environment variable for backend API base URL
+const API_BASE_URL = process.env.REACT_APP_BACKEND_API;
+
 const Payment = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -166,20 +169,22 @@ const Payment = () => {
       
       try {
         console.log("Fetching gift cards on payment page load...");
+        console.log('env value ', process.env.REACT_APP_BACKEND_API);
+        
         
         // Try to use the proxy server API call
-        const apiUrl = 'http://localhost:5000/api/giftcards/search';
+        const apiUrl = `${API_BASE_URL}/api/giftcards/search`;
         
         const payload = {
           "amount": totalAmount,
-          "code": "Amazon"  // Empty code to get all available cards
+          "code": "Myntra"  // Empty code to get all available cards
         };
         
         console.log("Sending gift card request with payload:", payload);
         
         try {
           // First test if the proxy server is available
-          const testResponse = await fetch('http://localhost:5000/api/test');
+          const testResponse = await fetch(`${API_BASE_URL}/api/test`);
           if (!testResponse.ok) {
             throw new Error('Proxy server test failed');
           }
@@ -209,7 +214,7 @@ const Payment = () => {
                 return {
                   id: hit._id || `api-${index}`,
                   name: source.name || 'Gift Card',
-                  value: Math.abs(totalAmount - hit.sort || 100),
+                  value: Math.abs(totalAmount - hit.sort),
                   code: source.id || `GC-${index + 1000}`,
                   color: ['#ffeae9', '#fff1e0', '#e9f7ff', '#edfff0'][index % 4],
                   offers: [
@@ -249,11 +254,11 @@ const Payment = () => {
     // New: Fetch "add amount" gift cards
     const fetchAddAmountGiftCards = async () => {
       try {
-        const apiUrl = 'http://localhost:5000/api/giftcards/search';
+        const apiUrl = `${API_BASE_URL}/api/giftcards/search`;
         // Example: ask for cards with higher value than totalAmount
         const payload = {
-          "amount": totalAmount + 1000, // or any logic to get higher value cards
-          "code": "Amazon"
+          "amount": totalAmount, // or any logic to get higher value cards
+          "code": "Myntra"
         };
         const response = await fetch(apiUrl, {
           method: 'POST',
@@ -271,7 +276,7 @@ const Payment = () => {
                 return {
                   id: hit._id || `addapi-${index}`,
                   name: source.name || 'Gift Card',
-                  value: Math.abs((hit.sort || 0) - totalAmount),
+                  value: Math.abs(totalAmount - hit.sort),
                   code: source.id || `GC-${index + 2000}`,
                   color: ['#f0e9ff', '#e0f7fa', '#fffde7', '#fce4ec'][index % 4],
                   offers: [
