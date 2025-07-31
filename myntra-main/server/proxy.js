@@ -12,6 +12,14 @@ app.use(cors());
 // Parse JSON request bodies
 app.use(bodyParser.json());
 
+// Add debugging middleware to log all incoming requests
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  console.log('Request headers:', req.headers);
+  console.log('Request body:', req.body);
+  next();
+});
+
 // Proxy endpoint for Woohoo API
 app.post('/api/woohoo/orders', async (req, res) => {
   try {
@@ -47,16 +55,17 @@ app.post('/api/woohoo/orders', async (req, res) => {
 // Add a new endpoint for gift card search
 app.post('/api/giftcards/search', async (req, res) => {
   try {
-    console.log('Proxy server received request for gift card search');
+    console.log('➡️ Proxy server received request for gift card search');
+    console.log('Request payload:', req.body);
     
     // Forward the request to the actual gift card API
-    const response = await axios.post('http://15.207.173.77:8000/product/search', req.body, {
+    const response = await axios.post('http://15.207.173.77:8000/products/search', req.body, {
       headers: {
         'Content-Type': 'application/json'
       }
     });
     
-    console.log('Gift card API response:', response.data);
+    console.log('Gift card API response:', response.data.hits.hits);
     
     // Return the API response to the frontend
     res.json(response.data);
@@ -70,6 +79,23 @@ app.post('/api/giftcards/search', async (req, res) => {
       details: error.response ? error.response.data : null
     });
   }
+});
+
+// Add a test endpoint to verify server is working
+app.get('/api/test', (req, res) => {
+  console.log('Test endpoint hit');
+  res.json({ status: 'success', message: 'Proxy server is working!' });
+});
+
+// Add a catch-all route to debug unmatched routes
+app.use((req, res, next) => {
+  console.log(`⚠️ UNMATCHED ROUTE: ${req.method} ${req.url}`);
+  if (req.method === 'POST' && req.url.includes('giftcards')) {
+    console.log('This looks like the gift card search request but did not match the route');
+    console.log('Full URL:', req.url);
+    console.log('Body:', req.body);
+  }
+  next();
 });
 
 app.listen(PORT, () => {

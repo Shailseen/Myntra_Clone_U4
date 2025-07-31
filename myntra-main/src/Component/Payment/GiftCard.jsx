@@ -357,57 +357,18 @@ const GiftCard = ({ onApply, totalAmount }) => {
       setError(null);
       
       try {
-        // Simulate API response for development instead of hitting the API directly
-        // This avoids CORS and connection issues during development
-        console.log("Using simulated gift card data");
         
-        // Simulated API data that matches the expected format
-        const simulatedApiResponse = [
-          { 
-            code: "Amazon",
-            amount: -150.00,
-            description: "Amazon Gift Card"
-          },
-          { 
-            code: "Flipkart",
-            amount: -200.00,
-            description: "Flipkart Gift Card"
-          },
-          { 
-            code: "Myntra",
-            amount: -300.00,
-            description: "Myntra Gift Card" 
-          }
-        ];
+        console.log("Fetching gift cards via proxy server...");
         
-        // Transform the simulated API response to our card format
-        const apiCards = simulatedApiResponse.map((item, index) => {
-          return {
-            id: `api-${index}`,
-            name: item.code || 'Gift Card',
-            value: Math.abs(item.amount) || 100,
-            code: item.code || `GC-${index + 1000}`,
-            color: ['#ffeae9', '#fff1e0', '#e9f7ff', '#edfff0'][index % 4],
-            offers: [
-              `${item.description || item.code} Gift Card`,
-              'Valid for online purchases'
-            ]
-          };
-        });
+        const apiUrl = 'http://localhost:5000/api/giftcards/search';
         
-        // Use the transformed cards
-        setAvailableCards(apiCards);
-        
-        /* 
-        // Commented out the actual API call to avoid connection issues
-        // When you have a proper proxy server setup, you can uncomment this code
-        
-        const apiUrl = 'http://localhost:5000/api/giftcards/search';  // Your proxy endpoint
-        
+        // Updated to use totalAmount from props instead of hardcoded value
         const payload = {
-          "amount": -1.50,
+          "amount": totalAmount,
           "code": "Amazon"
         };
+        
+        console.log("Sending gift card request with payload:", payload);
         
         const response = await fetch(apiUrl, {
           method: 'POST',
@@ -424,32 +385,38 @@ const GiftCard = ({ onApply, totalAmount }) => {
         const data = await response.json();
         console.log("Gift card API response:", data);
         
-        if (data && Array.isArray(data)) {
-          const apiCards = data.map((item, index) => {
-            return {
-              id: `api-${index}`,
-              name: item.code || 'Gift Card',
-              value: Math.abs(item.amount) || 100,
-              code: item.code || `GC-${index + 1000}`,
-              color: ['#ffeae9', '#fff1e0', '#e9f7ff', '#edfff0'][index % 4],
-              offers: [
-                `${item.code} Gift Card`,
-                'Valid for online purchases'
-              ]
-            };
-          });
-          
-          setAvailableCards(apiCards);
+        // Handle the specific API response format
+        if (data && data.hits && data.hits.hits && Array.isArray(data.hits.hits)) {
+          if (data.hits.hits.length > 0) {
+            // If we have hits, map them to our card format
+            const apiCards = data.hits.hits.map((hit, index) => {
+              const source = hit._source || {};
+              return {
+                id: hit._id || `api-${index}`,
+                name: source.name || 'Gift Card',
+                value: Math.abs(totalAmount - hit.sort || 100),
+                code: source.id || `GC-${index + 1000}`,
+                color: ['#ffeae9', '#fff1e0', '#e9f7ff', '#edfff0'][index % 4],
+                offers: [
+                  `${source.description?.substring(0, 15) + '...' || 'Gift Card'}`
+                ]
+              };
+            });
+            console.log("API gift cards:", apiCards);
+            setAvailableCards(apiCards);
+          } else {
+            // No results, use mock data
+            console.log("No gift cards found in API response, using mock data");
+            setAvailableCards(mockGiftCards);
+          }
         } else {
-          console.log("No valid card data in API response, using mock data");
+          // Fall back to mock data
+          console.log("Unexpected API response format, using mock data");
           setAvailableCards(mockGiftCards);
         }
-        */
-        
       } catch (err) {
-        console.error("Error fetching gift cards:", err);
+        console.error("Error in gift card fetch process:", err);
         setError(err.message);
-        // Fall back to mock data on error
         setAvailableCards(mockGiftCards);
       } finally {
         setIsLoading(false);
