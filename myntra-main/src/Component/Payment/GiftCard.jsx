@@ -300,24 +300,23 @@ const PaymentIframeContainer = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0,0,0,0.7);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  padding: 20px;
 `;
 
 const PaymentIframe = styled.iframe`
-  width: 80%;
-  height: 80%;
+  width: 420px;
+  height: 480px;
   border: none;
   border-radius: 8px;
   background-color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 `;
 
 const LoadingMessage = styled.div`
@@ -398,7 +397,7 @@ const GiftCard = ({
   const [showPaymentIframe, setShowPaymentIframe] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [paymentCountdown, setPaymentCountdown] = useState(10);
+  const [paymentCountdown, setPaymentCountdown] = useState(10); // 10 seconds
   
   const iframeRef = useRef(null);
   const countdownTimerRef = useRef(null);
@@ -560,52 +559,22 @@ const GiftCard = ({
   const handlePayment = () => {
     if (appliedCard) {
       setIsProcessingPayment(true);
-      
-      makeWoohooPaymentXHR()
-        .then(result => {
-          console.log("Payment API response:", result);
-          
-          if (result && result.success) {
-            const data = result.data;
-            
-            // Extract the redirect URL from the payment response
-            if (data && data.payments && data.payments.redirect && data.payments.redirect.url) {
-              const redirectUrl = data.payments.redirect.url;
-              console.log("Payment redirect URL:", redirectUrl);
-              
-              // Show the iframe with the payment URL
-              setPaymentUrl(redirectUrl);
-              setShowPaymentIframe(true);
-              
-              // Start countdown for auto-redirect
-              setPaymentCountdown(10);
-              countdownTimerRef.current = setInterval(() => {
-                setPaymentCountdown(prev => {
-                  if (prev <= 1) {
-                    clearInterval(countdownTimerRef.current);
-                    setShowPaymentIframe(false);
-                    navigate('/ordersuccess');
-                    return 0;
-                  }
-                  return prev - 1;
-                });
-              }, 1000);
-            } else {
-              console.error("Payment redirect URL not found in response");
-              // Still proceed to success page for demo purposes
-              setTimeout(() => {
-                navigate('/ordersuccess');
-              }, 2000);
-            }
-          } else {
-            console.error("Payment failed:", result?.error || "Unknown error");
-            setIsProcessingPayment(false);
+
+      // For demo: show payment overlay
+      setShowPaymentIframe(true);
+      setPaymentCountdown(10); // 10 seconds
+
+      countdownTimerRef.current = setInterval(() => {
+        setPaymentCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownTimerRef.current);
+            setShowPaymentIframe(false);
+            navigate('/ordersuccess');
+            return 0;
           }
-        })
-        .catch(error => {
-          console.error("Payment error:", error);
-          setIsProcessingPayment(false);
+          return prev - 1;
         });
+      }, 1000);
     }
   };
 
@@ -617,6 +586,162 @@ const GiftCard = ({
       }
     };
   }, []);
+
+  // Helper to generate the HTML for the dummy UPI QR payment page
+  function getDummyUPIPaymentHTML(orderId, amount, timerSeconds) {
+    return `
+    <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; }
+          .container { background: #fff; width: 380px; margin: 40px auto; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
+          .header { background: #1746a2; color: #fff; padding: 18px 20px; }
+          .header .brand { font-weight: bold; font-size: 18px; letter-spacing: 1px; }
+          .header .order { font-size: 13px; margin-top: 6px; }
+          .header .amt { font-size: 18px; font-weight: bold; margin-top: 8px; }
+          .pay-section { padding: 18px 20px 10px 20px; }
+          .pay-title { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+          .qr-box { background: #fff; border: 1px solid #eee; border-radius: 6px; padding: 12px; text-align: center; }
+          .qr-img { width: 140px; height: 140px; margin: 0 auto 10px auto; display: block; }
+          .scan-pay { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+          .upi-icons { margin: 8px 0 6px 0; }
+          .upi-icons img { height: 22px; margin: 0 4px; vertical-align: middle; }
+          .expires { color: #555; font-size: 13px; margin-top: 8px; }
+          .footer { text-align: center; color: #888; font-size: 13px; margin: 18px 0 0 0; }
+          .ccavenue { font-size: 12px; color: #888; margin-top: 12px; }
+        </style>
+        <script>
+          let timer = ${timerSeconds};
+          function updateTimer() {
+            if (timer <= 0) return;
+            timer--;
+            var min = Math.floor(timer / 60);
+            var sec = timer % 60;
+            document.getElementById('timer').innerText = min + ':' + (sec < 10 ? '0' : '') + sec;
+            if (timer > 0) setTimeout(updateTimer, 1000);
+          }
+          window.onload = updateTimer;
+        </script>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div class="brand">MALAYSIA AIRLINES BERHAD</div>
+            <div class="order">Order ID : ${orderId}</div>
+            <div class="amt">₹ ${amount}.00</div>
+          </div>
+          <div class="pay-section">
+            <div class="pay-title">Pay through UPI QR Code</div>
+            <div class="qr-box">
+              <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=upi://pay?pa=demo@upi&pn=Demo%20Merchant&am=${amount}" alt="QR Code" />
+              <div class="scan-pay">Scan and Pay</div>
+              <div style="font-size:12px;color:#888;">Scan the QR code using any UPI app on your phone</div>
+              <div class="upi-icons">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/UPI-Logo-vector.svg" alt="UPI" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Paytm_logo.png" alt="Paytm" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/WhatsApp_Logo.svg" alt="WhatsApp" />
+              </div>
+              <div class="expires">Expires in <span id="timer">${Math.floor(timerSeconds/60)}:${(timerSeconds%60).toString().padStart(2,'0')}</span> mins.</div>
+            </div>
+          </div>
+          <div class="footer">
+            <div class="ccavenue">CCAvenue<sup>®</sup> An Infibeam Avenues Product</div>
+          </div>
+        </div>
+      </body>
+    </html>
+    `;
+  }
+
+  // Dummy UPI payment styled components
+const DummyUPIPaymentBox = styled.div`
+  background: #fff;
+  width: 420px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow: hidden;
+  margin: 40px auto;
+  padding-bottom: 16px;
+`;
+
+const DummyHeader = styled.div`
+  background: #1746a2;
+  color: #fff;
+  padding: 18px 20px;
+  border-radius: 10px 10px 0 0;
+`;
+
+const DummyBrand = styled.div`
+  font-weight: bold;
+  font-size: 18px;
+  letter-spacing: 1px;
+`;
+
+const DummyOrder = styled.div`
+  font-size: 13px;
+  margin-top: 6px;
+`;
+
+const DummyAmt = styled.div`
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 8px;
+`;
+
+const DummyPaySection = styled.div`
+  padding: 18px 20px 10px 20px;
+`;
+
+const DummyPayTitle = styled.div`
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 10px;
+`;
+
+const DummyQRBox = styled.div`
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 12px;
+  text-align: center;
+`;
+
+const DummyQRImg = styled.img`
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 10px auto;
+  display: block;
+`;
+
+const DummyScanPay = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+`;
+
+const DummyUPIIcons = styled.div`
+  margin: 8px 0 6px 0;
+  & img { height: 22px; margin: 0 4px; vertical-align: middle; }
+`;
+
+const DummyExpires = styled.div`
+  color: #555;
+  font-size: 13px;
+  margin-top: 8px;
+`;
+
+const DummyFooter = styled.div`
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+  margin: 18px 0 0 0;
+`;
+
+const DummyCCAvenue = styled.div`
+  font-size: 12px;
+  color: #888;
+  margin-top: 12px;
+`;
 
   return (
     <GiftCardContainer>
@@ -749,12 +874,40 @@ const GiftCard = ({
       {/* Payment iframe overlay */}
       {showPaymentIframe && (
         <PaymentIframeContainer>
-          <PaymentIframe 
-            ref={iframeRef}
-            src={paymentUrl}
-            title="Payment Gateway"
-            allowFullScreen
-          />
+          {/* QR and payment box are rendered ONCE, only timer text updates */}
+          <DummyUPIPaymentBox>
+            <DummyHeader>
+              <DummyBrand>MALAYSIA AIRLINES BERHAD</DummyBrand>
+              <DummyOrder>Order ID : APCP2323000232</DummyOrder>
+              <DummyAmt>₹ {netPayable}.00</DummyAmt>
+            </DummyHeader>
+            <DummyPaySection>
+              <DummyPayTitle>Pay through UPI QR Code</DummyPayTitle>
+              <DummyQRBox>
+                <DummyQRImg
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=upi://pay?pa=demo@upi&pn=Demo%20Merchant&am=2000}`}
+                  alt="QR Code"
+                />
+                <DummyScanPay>Scan and Pay</DummyScanPay>
+                <div style={{ fontSize: 12, color: "#888" }}>
+                  Scan the QR code using any UPI app on your phone
+                </div>
+                <DummyUPIIcons>
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/UPI-Logo-vector.svg" alt="UPI" />
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Paytm_logo.png" alt="Paytm" />
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/WhatsApp_Logo.svg" alt="WhatsApp" />
+                </DummyUPIIcons>
+                <DummyExpires>
+                  Expires in {paymentCountdown} sec.
+                </DummyExpires>
+              </DummyQRBox>
+            </DummyPaySection>
+            <DummyFooter>
+              <DummyCCAvenue>
+                CCAvenue<sup>®</sup> An Infibeam Avenues Product
+              </DummyCCAvenue>
+            </DummyFooter>
+          </DummyUPIPaymentBox>
           <LoadingMessage>
             Completing your payment... Redirecting in {paymentCountdown} seconds
           </LoadingMessage>
