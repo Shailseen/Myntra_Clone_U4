@@ -30,25 +30,30 @@ import {
   TotalAmountrs,
   TotalPriceDiv,
 } from "./CartRight.element";
-import { auth } from "../../firebse/firebase-config";
 import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
-const CartRightS = () => {
-  const navigate = useNavigate();
-  const bagData = useSelector((state) => state.bag.bagData);
+import { selectCartItems, selectGiftCard, selectFinalTotal } from "../../redux/cartSlice";
 
-  let totalAmount = 0;
-  bagData?.map(
-    (e) =>
-      (totalAmount += Math.floor(
-        Number(e.off_price) * ((100 - Number(e.discount)) / 100)
-      ))
-  );
-  // console.log(totalAmount);
+const CartRightS = ({ totalItems, totalAmount: propTotalAmount }) => {
+  const navigate = useNavigate();
+  const cartItems = useSelector(selectCartItems);
+  const giftCard = useSelector(selectGiftCard);
+  const finalTotal = useSelector(selectFinalTotal);
+
+  // Use provided total or calculate from Redux cart
+  let totalAmount = propTotalAmount;
+  if (!totalAmount) {
+    totalAmount = 0;
+    cartItems?.forEach(
+      (e) => {
+        totalAmount += Math.floor(Number(e.price) * (e.quantity || 1));
+      }
+    );
+  }
 
   let totalMRP = 0;
-  bagData?.map((e) => (totalMRP += Math.floor(Number(e.off_price))));
-  // console.log(totalMRP);
+  cartItems?.forEach(
+    (e) => (totalMRP += Math.floor(Number(e.price)))
+  );
 
   let totalDiscount = totalMRP - totalAmount;
 
@@ -66,7 +71,7 @@ const CartRightS = () => {
         </ApplyCoupondiv>
       </CouponApplyDiv>
       <AllPriceDiv>
-        <PriceDetailsT>PRICE DETAILS ({bagData.length} Items)</PriceDetailsT>
+        <PriceDetailsT>PRICE DETAILS ({cartItems.length} Items)</PriceDetailsT>
         <TmrpDiv>
           <Tmrp>TOTAL MRP</Tmrp>
           <Tmrprs>₹{totalMRP}</Tmrprs>
@@ -79,6 +84,12 @@ const CartRightS = () => {
           <CoupDis>Coupon Discount</CoupDis>
           <CoupDisrs>Apply Coupon</CoupDisrs>
         </CoupDisDiv>
+        {giftCard && (
+          <DmrpDiv>
+            <Dmrp>Gift Card Discount</Dmrp>
+            <Dmrprs>-₹{giftCard.value}</Dmrprs>
+          </DmrpDiv>
+        )}
         <CoviFeediv>
           <CoviFee>Convenience Fee</CoviFee>
           <CoviFeeKM>Know More</CoviFeeKM>
@@ -88,7 +99,7 @@ const CartRightS = () => {
       <TotalPriceDiv>
         <TotalAmountdiv>
           <TotalAmount>Total Amount</TotalAmount>
-          <TotalAmountrs>₹{totalAmount}</TotalAmountrs>
+          <TotalAmountrs>₹{giftCard ? finalTotal : totalAmount}</TotalAmountrs>
         </TotalAmountdiv>
         <PlaceorderDiv>
           <PlaceorderButton onClick={placeOrder}>PLACE ORDER</PlaceorderButton>

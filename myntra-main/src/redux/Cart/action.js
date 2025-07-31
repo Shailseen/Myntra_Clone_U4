@@ -108,8 +108,11 @@ export const decreaseQty = (id) => {
 export const postBagData = (payload) => async (dispatch) => {
   dispatch(postBagRequest());
 
+  // Ensure quantity is always at least 1
+  const safePayload = { ...payload, quantity: payload.quantity && payload.quantity > 0 ? payload.quantity : 1 };
+
   return axios
-    .post("https://myntrafinaldata.herokuapp.com/cart", payload)
+    .post("https://myntrafinaldata.herokuapp.com/cart", safePayload)
     .then((res) => {
       dispatch(postBagSuccess());
       dispatch(getBagData());

@@ -66,20 +66,19 @@ import {
 } from "../Cart/CartRight.element";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { selectCartItems } from "../../redux/cartSlice";
 const Address = () => {
   const navigate = useNavigate();
-  const bagData = useSelector((state) => state.bag.bagData);
+  const cartItems = useSelector(selectCartItems);
 
   let totalAmount = 0;
-  bagData?.map(
+  cartItems?.forEach(
     (e) =>
-      (totalAmount += Math.floor(
-        Number(e.off_price) * ((100 - Number(e.discount)) / 100)
-      ))
+      (totalAmount += Math.floor(Number(e.price) * (e.quantity || 1)))
   );
 
   let totalMRP = 0;
-  bagData?.map((e) => (totalMRP += Math.floor(Number(e.off_price))));
+  cartItems?.forEach((e) => (totalMRP += Math.floor(Number(e.price))));
 
   let totalDiscount = totalMRP - totalAmount;
   const goToPayment = () => {
@@ -139,7 +138,7 @@ toast.success("Address Added SuccessFully")
         <FormRightDiv>
           <AllPriceDiv>
             <PriceDetailsT>
-              PRICE DETAILS ({bagData.length} Items)
+              PRICE DETAILS ({cartItems.length} Items)
             </PriceDetailsT>
             <TmrpDiv>
               <Tmrp>TOTAL MRP</Tmrp>

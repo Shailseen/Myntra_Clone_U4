@@ -1,32 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
+import { CardGiftcard, LocalOfferOutlined } from "@mui/icons-material";
 
+// Styled components for GiftCard
 const GiftCardContainer = styled.div`
   padding: 20px;
   width: 100%;
-  box-sizing: border-box;
-  max-width: 500px;
+  box-sizing: border-box; // Ensure padding is included in width calculation
+  overflow: hidden; // Prevent content from spilling out
 `;
 
-const GiftCardHeading = styled.h3`
-  font-size: 18px;
+const GiftCardHeader = styled.div`
+  font-size: 16px;
   font-weight: 600;
-  margin-bottom: 20px;
-  color: #282c3f;
   text-transform: uppercase;
+  margin-bottom: 20px;
 `;
 
-const GiftCardInputContainer = styled.div`
+const GiftCardForm = styled.div`
   display: flex;
+  gap: 10px;
   margin-bottom: 20px;
-  gap: 15px;
-  align-items: center;
 `;
 
 const GiftCardInput = styled.input`
   flex: 1;
-  box-sizing: border-box;
   padding: 12px;
   border: 1px solid #d4d5d9;
   border-radius: 4px;
@@ -41,406 +39,458 @@ const ApplyButton = styled.button`
   background-color: #ff3f6c;
   color: white;
   border: none;
-  padding: 10px 30px;
+  border-radius: 4px;
+  padding: 0 20px;
   font-size: 14px;
   font-weight: 600;
-  border-radius: 4px;
   cursor: pointer;
-  white-space: nowrap;
   &:hover {
-    background-color: #e33862;
+    background-color: #e63161;
   }
 `;
 
-const CardsContainer = styled.div`
-  max-height: 200px;
-  overflow-y: auto;
-  margin-top: 15px;
-  border-radius: 4px;
-  position: relative;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 30px;
-    background: linear-gradient(to bottom, white, transparent);
-    pointer-events: none;
-    z-index: 1;
-    display: ${props => props.isScrolledTop ? 'none' : 'block'};
-  }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 30px;
-    background: linear-gradient(to top, white, transparent);
-    pointer-events: none;
-    z-index: 1;
-    display: ${props => props.isScrolledBottom ? 'none' : 'block'};
-  }
-  
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 10px;
-  }
-  
-  &::-webkit-scrollbar-thumb:hover {
-    background: #555;
-  }
+const GiftCardList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0;
 `;
 
 const GiftCardItem = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 15px 0;
-  margin: 0 5px;
-  border-bottom: 1px solid #f5f5f6;
-`;
-
-const GiftCardImage = styled.img`
-  width: 50px;
-  height: 40px;
-  margin-right: 15px;
-  object-fit: contain;
-  border: 1px solid #f5f5f6;
-  padding: 5px;
+  border: 1px solid #eaeaec;
   border-radius: 4px;
-`;
-
-const GiftCardDetails = styled.div`
-  flex: 1;
-  min-width: 0;
-`;
-
-const GiftCardName = styled.h4`
-  font-size: 16px;
-  margin-bottom: 5px;
-  color: #282c3f;
-`;
-
-const GiftCardValue = styled.p`
-  font-size: 16px;
-  font-weight: 600;
-  color: #282c3f;
-  margin-bottom: 5px;
-  &::before {
-    content: "₹";
-  }
-`;
-
-const GiftCardDescription = styled.p`
-  font-size: 12px;
-  color: #94969f;
-  margin: 0;
-  line-height: 1.4;
-`;
-
-const ApplyCardButton = styled.button`
-  background-color: white;
-  color: #ff3f6c;
-  border: 1px solid #ff3f6c;
-  padding: 8px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-left: 15px;
-  flex-shrink: 0;
-  &:hover {
-    background-color: rgba(255, 63, 108, 0.05);
-  }
-`;
-
-const GiftCardInfoMessage = styled.p`
-  font-size: 12px;
-  color: #ff3f6c;
-  margin-top: 5px;
-  text-align: center;
-`;
-
-const GiftCardAppliedSection = styled.div`
-  margin-top: 20px;
   padding: 15px;
-  background-color: #f5f5f6;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: auto;
+//   margin-bottom: 15px;
+  &:hover {
+    border-color: #ff3f6c;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const CardImage = styled.div`
+  background-color: ${props => props.color || '#f5f5f6'};
+  height: 40px;
+  width: 40px;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 4px;
+  margin-right: 15px;
 `;
 
-const AppliedCard = styled.div`
+const CardContent = styled.div`
+  flex: 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  overflow: hidden;
+`;
+
+const CardInfo = styled.div`
+  display: flex;
   justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  width: 100%;
 `;
 
-const AppliedCardInfo = styled.div`
+const CardName = styled.div`
+  font-weight: 600;
+  font-size: 14px;
+`;
+
+const CardValue = styled.div`
+  color: #282c3f; // Changed from pink (#ff3f6c) to neutral dark color
+  font-weight: 600;
+  font-size: 14px;
+`;
+
+const CardOffers = styled.div`
+  font-size: 11px;
+  color: #7e818c;
+  margin-bottom: 0;
+`;
+
+const OfferItem = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+  margin-bottom: 2px;
+  line-height: 1.2;
+`;
+
+const CardActions = styled.div`
+  margin-left: -10px; // Use negative margin to pull button closer
+  width: 100px;
+  min-width: 60px;
+`;
+
+const CardApplyButton = styled.button`
+  background-color: #ff3f6c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 0;
+  width: 100%;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover {
+    background-color: #e63161;
+  }
+`;
+
+const Divider = styled.div`
+  border-top: 1px dashed #d4d5d9;
+  margin: 20px 0;
+  position: relative;
+  
+  &::before {
+    content: 'OR';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 0 10px;
+    color: #7e818c;
+    font-size: 12px;
+  }
+`;
+
+const SuccessMessage = styled.div`
+  color: #03a685;
+  font-size: 16px;
+  margin: 15px 0;
+  padding: 10px;
+  background-color: #f5fffd;
+  border-radius: 4px;
+  border-left: 3px solid #03a685;
+`;
+
+const GiftCardApplied = styled.div`
+  border: 1px solid #eaeaec;
+  border-radius: 4px;
+  padding: 15px;
+  margin-top: 15px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  width: auto; // Allow container to determine width
+  max-width: 100%; // Ensure it doesn't exceed parent width
+  box-sizing: border-box; // Include padding in width calculation
+`;
+
+const AppliedCardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f5f5f5;
+  flex-wrap: wrap; // Allow wrapping if space is limited
+`;
+
+const CardTitle = styled.div`
   display: flex;
   align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 16px;
 `;
 
 const RemoveButton = styled.button`
-  background-color: transparent;
   color: #ff3f6c;
+  background: none;
   border: none;
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  &:hover {
-    text-decoration: underline;
-  }
+  padding: 5px;
+  white-space: nowrap;
 `;
 
-const PayButton = styled.button`
-  background-color: ${props => props.disabled ? "#b4b4b4" : "#ff3f6c"};
+const AmountApplied = styled.div`
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #282c3f;
+`;
+
+const NetPayableAmount = styled.div`
+  font-size: 16px;
+  font-weight: 700;
+  color: #ff3f6c;
+  margin-top: 15px;
+  padding: 12px;
+  background-color: #fff1f4;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: auto;
+  max-width: 100%;
+  box-sizing: border-box;
+`;
+
+const NetPayableLabel = styled.span`
+  font-size: 16px;
+  color: #282c3f;
+  font-weight: 600;
+`;
+
+// Add the missing styled components
+const DiscountPreview = styled.div`
+  font-size: 12px;
+  color: #03a685;
+  margin-top: 5px;
+`;
+
+const NetPayablePreview = styled.div`
+  font-size: 12px;
+  color: #282c3f;
+  font-weight: 500;
+  margin-top: 3px;
+`;
+
+// Enhanced summary display
+const OrderSummary = styled.div`
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px dashed #eaeaec;
+`;
+
+const SummaryRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: ${props => props.highlight ? '#ff3f6c' : '#535766'};
+  font-weight: ${props => props.bold ? '600' : '400'};
+`;
+
+// Add the PayNowButton styled component
+const PayNowButton = styled.button`
+  background-color: ${props => props.disabled ? "#cccccc" : "#ff3f6c"};
   color: white;
-  width: 100%;
   border: none;
+  border-radius: 4px;
+  width: 100%;
   padding: 15px;
   font-size: 16px;
   font-weight: 600;
-  border-radius: 4px;
+  margin-top: 20px;
   cursor: ${props => props.disabled ? "not-allowed" : "pointer"};
-  margin-top: 30px;
+  opacity: ${props => props.disabled ? 0.7 : 1};
   transition: all 0.3s ease;
-  
   &:hover {
-    background-color: ${props => props.disabled ? "#b4b4b4" : "#e33862"};
+    background-color: ${props => props.disabled ? "#cccccc" : "#e63161"};
   }
 `;
 
+// Mock gift card data with offers
+const mockGiftCards = [
+  { 
+    id: 'gc1', 
+    name: 'Birthday Gift Card', 
+    value: 500, 
+    code: 'MYN500', 
+    color: '#ffeae9',
+    offers: [
+      'Valid on all products',
+      'Minimum amount: 2000'
+    ]
+  },
+  { 
+    id: 'gc2', 
+    name: 'Anniversary Gift Card', 
+    value: 1000, 
+    code: 'MYN1000', 
+    color: '#fff1e0',
+    offers: [
+      'Valid for 1 year from purchase',
+      'Can be used with other offers'
+    ]
+  },
+  { 
+    id: 'gc3', 
+    name: 'Special Gift Card', 
+    value: 750, 
+    code: 'MYN750', 
+    color: '#e9f7ff',
+    offers: [
+      'Applicable on premium brands',
+      'Exclusive member benefits'
+    ]
+  },
+  { 
+    id: 'gc4', 
+    name: 'Celebration Gift Card', 
+    value: 200, 
+    code: 'MYN200', 
+    color: '#edfff0',
+    offers: [
+      'Perfect for gifting',
+      'Valid on all categories'
+    ]
+  },
+];
+
 const GiftCard = ({ onApply, totalAmount }) => {
-  const navigate = useNavigate();
   const [giftCardCode, setGiftCardCode] = useState('');
-  const [giftCards, setGiftCards] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [appliedCard, setAppliedCard] = useState(null);
-  const [message, setMessage] = useState('');
-  const [isScrolledTop, setIsScrolledTop] = useState(true);
-  const [isScrolledBottom, setIsScrolledBottom] = useState(false);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [discount, setDiscount] = useState(0);
-
-  // Fetch gift card data from API
-  useEffect(() => {
-    const fetchGiftCards = async () => {
-      try {
-        setLoading(true);
-        // Replace empty URL with your actual API endpoint when available
-        const response = await fetch('');
-        
-        // For now, use mock data until API is available
-        // When you have the actual API URL, replace this with:
-        // const data = await response.json();
-        const data = [
-          {
-            id: 1,
-            name: "Myntra Gift Card",
-            code: "MYNTRA500",
-            value: 500,
-            description: "Myntra exclusive gift card for fashion purchases",
-            image: "https://constant.myntassets.com/pwa/assets/img/myntra-logo-small.png"
-          },
-          {
-            id: 2,
-            name: "Shopping Reward Card",
-            code: "SHOP1000",
-            value: 1000,
-            description: "Special rewards for loyal customers",
-            image: "https://constant.myntassets.com/pwa/assets/img/Gift-card.png"
-          },
-          {
-            id: 3,
-            name: "Premium Gift Voucher",
-            code: "PREMIUM2000",
-            value: 2000,
-            description: "Premium shopping experience with extra savings",
-            image: "https://constant.myntassets.com/pwa/assets/img/gift-card-premium.png"
-          }
-        ];
-        
-        setGiftCards(data);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching gift cards:", err);
-        setError("Failed to load gift cards. Please try again later.");
-        setLoading(false);
-      }
-    };
-
-    fetchGiftCards();
-  }, []);
-
-  const handleScroll = (e) => {
-    setIsScrolledTop(e.target.scrollTop === 0);
-    setIsScrolledBottom(
-      Math.abs(e.target.scrollHeight - e.target.scrollTop - e.target.clientHeight) < 1
-    );
-  };
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleApplyCode = () => {
-    if (!giftCardCode.trim()) {
-      setMessage('Please enter a valid gift card code');
-      return;
-    }
+    if (!giftCardCode.trim()) return;
 
-    const card = giftCards.find(
-      card => card.code.toLowerCase() === giftCardCode.toLowerCase()
+    // Determine gift card value based on code
+    let giftCardValue = 0;
+    let cardName = "Myntra Gift Card";
+    
+    // Check if code matches any of our mock cards
+    const matchedCard = mockGiftCards.find(card => 
+      card.code.toUpperCase() === giftCardCode.toUpperCase()
     );
     
-    if (card) {
-      applyGiftCard(card);
+    if (matchedCard) {
+      giftCardValue = matchedCard.value;
+      cardName = matchedCard.name;
+      
+      // Apply the matched card
+      handleApply({
+        ...matchedCard,
+        enteredCode: true
+      });
     } else {
-      setMessage('Invalid gift card code. Please try again.');
+      // Default value for testing with custom codes
+      giftCardValue = 200;
+      
+      // Apply a generic card
+      handleApply({
+        id: 'custom',
+        name: cardName,
+        value: giftCardValue,
+        code: giftCardCode,
+        enteredCode: true
+      });
     }
     
+    // Clear input
     setGiftCardCode('');
   };
 
-  const applyGiftCard = (card) => {
-    if (appliedCard) {
-      setMessage('You already have an applied gift card. Please remove it first.');
-      return;
-    }
+  const handleApply = (card) => {
+    // Set success message and apply discount
+    setSuccessMessage(`Gift card of ₹${card.value} applied successfully!`);
+    
+    // Store the applied card info
     setAppliedCard(card);
-    // Only discount up to the total amount
-    const discountValue = Math.min(card.value, totalAmount);
-    setDiscount(discountValue);
-    onApply(discountValue);
-    setMessage(`Gift card of ₹${discountValue} applied successfully!`);
+    
+    // Notify parent component
+    onApply(card.value);
   };
 
-  const handleRemoveGiftCard = () => {
+  const handleRemove = () => {
     setAppliedCard(null);
-    setDiscount(0);
-    onApply(0);
-    setMessage('Gift card removed');
+    setSuccessMessage('');
+    onApply(0); // Reset the discount
   };
 
-  const handlePayNow = async () => {
-    // Placeholder for your payment logic
-    setIsProcessingPayment(true);
-    setTimeout(() => {
-      setIsProcessingPayment(false);
-      navigate("/ordersuccess");
-    }, 1000);
+  // Calculate net payable after gift card
+  const netPayable = Math.max(0, totalAmount - (appliedCard?.value || 0));
+
+  // Add a function to handle payment
+  const handlePayment = () => {
+    if (appliedCard) {
+      // Navigate to order success page or process payment
+      window.location.href = "/ordersuccess";
+    }
   };
-
-  // Loading state
-  if (loading) {
-    return (
-      <GiftCardContainer>
-        <GiftCardHeading>Gift Card</GiftCardHeading>
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          Loading gift card options...
-        </div>
-      </GiftCardContainer>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <GiftCardContainer>
-        <GiftCardHeading>Gift Card</GiftCardHeading>
-        <div style={{ color: 'red', textAlign: 'center', padding: '20px 0' }}>
-          {error}
-        </div>
-      </GiftCardContainer>
-    );
-  }
 
   return (
     <GiftCardContainer>
-      <GiftCardHeading>Gift Card</GiftCardHeading>
+      <GiftCardHeader>GIFT CARD</GiftCardHeader>
       
-      <GiftCardInputContainer>
-        <GiftCardInput
-          type="text"
-          placeholder="Enter Gift Card Code"
-          value={giftCardCode}
-          onChange={(e) => setGiftCardCode(e.target.value)}
-        />
-        
-        <ApplyButton onClick={handleApplyCode}>
-          APPLY
-        </ApplyButton>
-      </GiftCardInputContainer>
-      
-      {message && <GiftCardInfoMessage>{message}</GiftCardInfoMessage>}
-      
-      {appliedCard ? (
+      {!appliedCard ? (
         <>
-          <GiftCardAppliedSection>
-            <AppliedCard>
-              <AppliedCardInfo>
-                <GiftCardImage src={appliedCard.image} alt={appliedCard.name} />
-                <GiftCardDetails>
-                  <GiftCardName>{appliedCard.name}</GiftCardName>
-                  <GiftCardValue>{appliedCard.value} Applied</GiftCardValue>
-                </GiftCardDetails>
-              </AppliedCardInfo>
-              <RemoveButton onClick={handleRemoveGiftCard}>REMOVE</RemoveButton>
-            </AppliedCard>
-            <div style={{ marginTop: 10 }}>
-              <span style={{ fontWeight: 600 }}>Order Total: </span>₹{totalAmount}<br />
-              <span style={{ fontWeight: 600, color: "#ff3f6c" }}>Gift Card Discount: </span>-₹{discount}<br />
-              <span style={{ fontWeight: 600 }}>Net Payable: </span>₹{Math.max(totalAmount - discount, 0)}
-            </div>
-          </GiftCardAppliedSection>
-          <PayButton 
-            onClick={handlePayNow} 
-            disabled={isProcessingPayment}
-          >
-            {isProcessingPayment ? 'PROCESSING...' : `PAY NOW ₹${Math.max(totalAmount - discount, 0)}`}
-          </PayButton>
+          <GiftCardList>
+            {mockGiftCards.map(card => (
+              <GiftCardItem key={card.id}>
+                <CardImage color={card.color}>
+                  <CardGiftcard sx={{ fontSize: 20, color: '#ff3f6c' }} />
+                </CardImage>
+                <CardContent>
+                  <CardInfo>
+                    <CardName>{card.name}</CardName>
+                    {/* Removed the CardValue component here */}
+                  </CardInfo>
+                  <CardOffers>
+                    {card.offers.map((offer, index) => (
+                      <OfferItem key={index}>
+                        <LocalOfferOutlined sx={{ fontSize: 10, color: '#ff3f6c', marginTop: "2px" }} />
+                        <span>{offer}</span>
+                      </OfferItem>
+                    ))}
+                  </CardOffers>
+                  <DiscountPreview>You save: ₹{Math.min(card.value, totalAmount)}</DiscountPreview>
+                  <NetPayablePreview>Net payable: ₹{Math.max(0, totalAmount - card.value)}</NetPayablePreview>
+                </CardContent>
+                <CardActions>
+                  <CardApplyButton onClick={() => handleApply(card)}>
+                    APPLY
+                  </CardApplyButton>
+                </CardActions>
+              </GiftCardItem>
+            ))}
+          </GiftCardList>
+          {successMessage && <SuccessMessage>{successMessage}</SuccessMessage>}
+          
+          {/* Add disabled PAY NOW button */}
+          <PayNowButton disabled={true}>
+            PAY NOW
+          </PayNowButton>
         </>
       ) : (
         <>
-          <GiftCardHeading>Available Gift Cards</GiftCardHeading>
-          {giftCards.length > 0 ? (
-            <>
-              <CardsContainer 
-                onScroll={handleScroll}
-                isScrolledTop={isScrolledTop}
-                isScrolledBottom={isScrolledBottom}
-              >
-                {giftCards.map((card) => (
-                  <GiftCardItem key={card.id}>
-                    <GiftCardImage src={card.image} alt={card.name} />
-                    <GiftCardDetails>
-                      <GiftCardName>{card.name}</GiftCardName>
-                      <GiftCardValue>{card.value}</GiftCardValue>
-                      <GiftCardDescription>{card.description}</GiftCardDescription>
-                    </GiftCardDetails>
-                    <ApplyCardButton onClick={() => applyGiftCard(card)}>
-                      APPLY
-                    </ApplyCardButton>
-                  </GiftCardItem>
-                ))}
-              </CardsContainer>
-              
-              <PayButton disabled={true}>
-                PAY NOW
-              </PayButton>
-            </>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              No gift cards available at the moment.
-            </div>
-          )}
+          <SuccessMessage>Gift card of ₹{appliedCard.value} applied successfully!</SuccessMessage>
+          <GiftCardApplied>
+            <AppliedCardHeader>
+              <CardTitle>
+                <CardGiftcard sx={{ fontSize: 24, color: '#ff3f6c' }} />
+                {appliedCard.name}
+              </CardTitle>
+              <RemoveButton onClick={handleRemove}>REMOVE</RemoveButton>
+            </AppliedCardHeader>
+            
+            <AmountApplied>₹{appliedCard.value} Applied</AmountApplied>
+            
+            {/* Enhanced order summary */}
+            <OrderSummary>
+              <SummaryRow>
+                <span>Order Total:</span>
+                <span>₹{totalAmount}</span>
+              </SummaryRow>
+              <SummaryRow highlight>
+                <span>Gift Card Discount:</span>
+                <span>-₹{Math.min(appliedCard.value, totalAmount)}</span>
+              </SummaryRow>
+              <SummaryRow bold highlight>
+                <span>Net Payable:</span>
+                <span>₹{netPayable}</span>
+              </SummaryRow>
+            </OrderSummary>
+            
+            {/* Add enabled PAY NOW button with amount */}
+            <PayNowButton onClick={handlePayment} disabled={false}>
+              PAY NOW ₹{netPayable}
+            </PayNowButton>
+          </GiftCardApplied>
         </>
       )}
     </GiftCardContainer>

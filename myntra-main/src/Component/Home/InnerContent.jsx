@@ -29,6 +29,36 @@ const divStyle = {
   maxHeight: "5em",
   fontWeight: "500",
 };
+
+// Add these styles for the product card
+const productCardStyle = {
+  border: "1px solid #eee",
+  padding: "16px",
+  width: "220px",
+  borderRadius: "4px",
+  transition: "all 0.3s ease",
+  cursor: "pointer",
+  "&:hover": {
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+  },
+};
+
+const addToCartButtonStyle = {
+  width: "100%",
+  padding: "8px 16px",
+  backgroundColor: "#ff3e6c",
+  color: "white",
+  border: "none",
+  borderRadius: "4px",
+  cursor: "pointer",
+  fontSize: "14px",
+  fontWeight: "600",
+  marginTop: "10px",
+  "&:hover": {
+    backgroundColor: "#ff527b",
+  },
+};
+
 function InnerContent() {
   const dealsOftheDay = useSelector((state) => state.home.dealsOftheDay);
   const bestofMyntra = useSelector((state) => state.home.bestOfMyntra);
@@ -83,9 +113,28 @@ function InnerContent() {
       .then((res) => dispatch(getTopInInfluncerExclusive(res)))
       .catch((e) => console.log(e));
   }, [dispatch]);
+
+  const handleAddToCart = (product) => {
+    try {
+      // Make sure to include quantity: 1 explicitly when dispatching addToCart
+      const productWithQuantity = {
+        ...product,
+        quantity: 1,
+      };
+
+      console.log("Adding product with quantity:", productWithQuantity);
+      dispatch(addToCart(productWithQuantity));
+
+      alert("Product added to cart successfully!");
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      alert("Failed to add product to cart");
+    }
+  };
+
   return (
     <div>
-      {/* Add this block at the top to show mock products */}
+      <SlideShow />
       <div
         style={{
           textAlign: "start",
@@ -102,40 +151,49 @@ function InnerContent() {
       <div
         style={{
           display: "flex",
-          gap: 24,
-          marginLeft: 30,
-          marginBottom: 30,
+          flexWrap: "wrap",
+          gap: "24px",
+          margin: "30px",
+          justifyContent: "flex-start",
         }}
       >
         {products &&
           products.map((product) => (
-            <div
-              key={product.id}
-              style={{
-                border: "1px solid #eee",
-                padding: 16,
-                width: 220,
-              }}
-            >
+            <div key={product.id} style={productCardStyle}>
               <img
                 src={product.image}
                 alt={product.name}
                 style={{
                   width: "100%",
-                  height: 120,
+                  height: "200px",
                   objectFit: "contain",
+                  marginBottom: "10px",
                 }}
               />
-              <h4>{product.name}</h4>
-              <p>{product.description}</p>
-              <div>₹{product.price}</div>
-              <button onClick={() => dispatch(addToCart(product))}>
-                Add to Cart
+              <h4 style={{ margin: "10px 0", fontSize: "16px" }}>
+                {product.name}
+              </h4>
+              <p style={{ color: "#535766", fontSize: "14px" }}>
+                {product.description}
+              </p>
+              <div
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  margin: "10px 0",
+                }}
+              >
+                ₹{product.price}
+              </div>
+              <button
+                style={addToCartButtonStyle}
+                onClick={() => handleAddToCart(product)}
+              >
+                ADD TO CART
               </button>
             </div>
           ))}
       </div>
-      <SlideShow />
       <div>
         <div style={divStyle}>
           {" "}

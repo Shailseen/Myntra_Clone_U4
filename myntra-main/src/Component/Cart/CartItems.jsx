@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   AddBoxOutlined,
   Clear,
@@ -24,16 +24,10 @@ import {
   RemoveButtonDiv,
   SizeDiv,
 } from "./Cart.element";
-import {
-  decrease,
-  decreaseQty,
-  deleteBagData,
-  getBagData,
-  increase,
-  increaseQty,
-} from "../../redux/Cart/action";
+import { removeFromCart, updateQuantity } from "../../redux/cartSlice";
 import { useDispatch, useSelector } from "react-redux";
-import {useNavigate} from "react-router-dom"
+import { useNavigate } from "react-router-dom";
+
 const CartItemsDiv = ({
   images,
   id,
@@ -43,54 +37,47 @@ const CartItemsDiv = ({
   off_price,
   discount,
   brand,
+  quantity,
 }) => {
-  const navigate = useNavigate()
-  const [count , setCount] = useState(0)
-  const bagData = useSelector((state) => state.bag.bagData);
   const dispatch = useDispatch();
+
   const handleModelBagClose = (id) => {
-    dispatch(deleteBagData(id));
+    dispatch(removeFromCart(id));
   };
 
-  // const increaseQ = (id, quantity) => {
-  //   const newQty = quantity + 1;
-  //   if (1 >= quantity) {
-  //     return;
-  //   }
-  //   dispatch(increase(id, newQty));
-  // };
   const increaseQ = () => {
-    setCount(count + 1);
+    dispatch(updateQuantity({ id, quantity: (quantity || 1) + 1 }));
   };
   const decreaseQ = () => {
-
-    setCount(count - 1);
+    if ((quantity || 1) > 1) {
+      dispatch(updateQuantity({ id, quantity: (quantity || 1) - 1 }));
+    }
   };
 
   return (
     <CartItemDiv>
       <Imagediv>
-        <ItemIamge src={images.image1}/>
+        <ItemIamge src={images?.image1 || images} />
       </Imagediv>
       <ItemInfoDiv>
         <Brand>{brand}</Brand>
         <Name>{title}</Name>
         <Filtercontainer>
           <SizeDiv>
-            <h4>{`Size: ${sizes[1]}`}</h4>
+            <h4>{`Size: ${sizes ? sizes[1] || sizes[0] : "M"}`}</h4>
           </SizeDiv>
           <FilterPM>
             <AddBoxOutlined
-              onClick={() => increaseQ(id, 0)}
+              onClick={increaseQ}
               sx={{
                 backgroundColor: "#fff",
                 color: "black",
                 marginRight: "5px",
               }}
             />
-            <p>{count}</p>
+            <p>{quantity || 1}</p>
             <IndeterminateCheckBoxOutlined
-              onClick={() => decreaseQ(id, count)}
+              onClick={decreaseQ}
               sx={{
                 color: "black",
                 backgroundColor: "#fff",
@@ -101,10 +88,14 @@ const CartItemsDiv = ({
         </Filtercontainer>
         <PriceDis>
           <Price>
-            ₹{Math.floor(Number(off_price) * ((100 - Number(discount)) / 100))}
+            ₹
+            {Math.floor(
+              Number(off_price || price) *
+                ((100 - Number(discount || 0)) / 100)
+            )}
           </Price>
-          <Oprice>{`₹${off_price}`}</Oprice>
-          <PercentOff>{`${discount}% OFF`}</PercentOff>
+          <Oprice>{`₹${off_price || price}`}</Oprice>
+          <PercentOff>{`${discount || 0}% OFF`}</PercentOff>
         </PriceDis>
       </ItemInfoDiv>
       <RemoveButtonDiv>
@@ -117,3 +108,4 @@ const CartItemsDiv = ({
 };
 
 export default CartItemsDiv;
+          

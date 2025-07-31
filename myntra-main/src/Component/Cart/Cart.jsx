@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
@@ -30,28 +30,26 @@ import CartNav from "./CartNav";
 import CartFoot from "./CartFoot";
 import CartRightS from "./CartRight";
 import CartItemsDiv from "./CartItems";
-import { deleteBagData, getBagData } from "../../redux/Cart/action";
+import { getBagData } from "../../redux/Cart/action";
+import { selectCartItems } from "../../redux/cartSlice";
 
 const Cart = () => {
-  const bagData = useSelector((state) => state.bag.bagData);
-  console.log(bagData);
-  const dispatch = useDispatch();
-  let totalAmount = 0;
-  bagData?.map(
-    (e) =>
-      (totalAmount += Math.floor(
-        Number(e.off_price) * ((100 - Number(e.discount)) / 100)
-      ))
-  );
+  // Use only Redux cart slice for cart items
+  const cartItems = useSelector(selectCartItems);
 
-  console.log(bagData)
-  // console.log(totalAmount);
+  // Calculate total with all items
+  let totalAmount = 0;
+  cartItems?.forEach((e) => {
+    totalAmount += Math.floor(
+      (Number(e.price) || 0) * (e.quantity || 1)
+    );
+  });
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(getBagData());
   }, [dispatch]);
-
-
 
   return (
     <Container>
@@ -130,16 +128,31 @@ const Cart = () => {
             </NoConvi>
           </NoConviDiv>
           <CartItemsScroll>
-            {bagData.map((item) => {
-              return <CartItemsDiv key={item.id} {...item} />;
-            })}
+            {cartItems.length > 0 ? (
+              cartItems.map((item) => (
+                <CartItemsDiv key={item.id} {...item} />
+              ))
+            ) : (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "50px 0",
+                  marginLeft: "30%",
+                  border: "1px solid #eaeaec",
+                  borderRadius: "4px",
+                }}
+              >
+                <h3>Your cart is empty</h3>
+                <p>Add items to your cart to see them here</p>
+              </div>
+            )}
           </CartItemsScroll>
           <WishListItem>
             <BookmarkBorderOutlined sx={{ width: "25px", height: "25px" }} />
             <WishName>Add More From WishList</WishName>
           </WishListItem>
         </CartLeft>
-        <CartRightS />
+        <CartRightS totalItems={cartItems.length} totalAmount={totalAmount} />
       </CartItems>
       <CartFoot />
     </Container>
@@ -147,3 +160,4 @@ const Cart = () => {
 };
 
 export default Cart;
+                  

@@ -25,7 +25,7 @@ export const makeGiftCardPayment = async (amount, orderInfo, onSuccess, onFailur
     // For this example, we'll simulate an order with a dummy ID
     const orderData = {
       id: `order_${Math.random().toString(36).substring(7)}`,
-      amount: amount * 100, // Razorpay expects amount in paise
+      amount: Math.max(amount * 100, 100), // Razorpay expects amount in paise, minimum 1 INR
       currency: 'INR'
     };
     
@@ -51,7 +51,8 @@ export const makeGiftCardPayment = async (amount, orderInfo, onSuccess, onFailur
       },
       notes: {
         address: orderInfo.address || "Test Address",
-        giftCardApplied: true
+        giftCardApplied: orderInfo.giftCardApplied || false,
+        giftCardAmount: orderInfo.giftCardAmount || 0
       },
       theme: {
         color: "#ff3f6c"

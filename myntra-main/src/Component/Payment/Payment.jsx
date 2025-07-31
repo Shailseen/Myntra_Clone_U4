@@ -5,6 +5,7 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import styled from 'styled-components';
+import { useSelector, useDispatch } from 'react-redux';
 
 import CartFoot from "../Cart/CartFoot";
 import {
@@ -92,22 +93,66 @@ import {
   QrCodeScanner,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
 import GiftCard from "./GiftCard"; // Import the new GiftCard component
+import { selectCartItems, selectCartTotal, selectGiftCard, selectFinalTotal } from '../../redux/cartSlice';
+import { makeGiftCardPayment } from '../../services/RazorpayService';
 
 const Payment = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [creditCardNum, setCreditCardNum] = useState("#### #### #### ####");
   const [cardHolder, setCardHolder] = useState("Your Full Name");
   const [expireMonthYear, setExpireMonthYear] = useState("MM/YY");
   const [cvv, setCvv] = useState("CVV");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("credit-debit");
-  const [giftCardApplied, setGiftCardApplied] = useState(false);
-  const [giftCardDiscount, setGiftCardDiscount] = useState(0);
+
+  // Get fresh data directly from Redux store
+  const cartItems = useSelector(selectCartItems);
+  const cartTotal = useSelector(selectCartTotal);
+  const giftCard = useSelector(selectGiftCard);
+  const finalTotal = useSelector(selectFinalTotal);
+  
+  // Calculate item count with quantities
+  const itemCount = cartItems.reduce((count, item) => count + (Number(item.quantity) || 1), 0);
+  
+  // Gift card state from Redux
+  const [giftCardApplied, setGiftCardApplied] = useState(!!giftCard);
+  const [giftCardDiscount, setGiftCardDiscount] = useState(giftCard ? giftCard.value : 0);
+
+  // Effect to sync with Redux gift card state
+  useEffect(() => {
+    if (giftCard) {
+      setGiftCardApplied(true);
+      setGiftCardDiscount(giftCard.value);
+    } else {
+      setGiftCardApplied(false);
+      setGiftCardDiscount(0);
+    }
+  }, [giftCard]);
 
   const handleSubmit = (e) => {
-    console.log("Hello");
-    navigate("/ordersuccess");
+    e.preventDefault();
+    
+    // If using Razorpay for payments
+    if (selectedPaymentMethod === "credit-debit") {
+      const orderInfo = {
+        orderId: `ORD_${Date.now()}`,
+        name: "Test User",
+        email: "test@example.com",
+        phone: "9999999999",
+        address: "Test Address"
+      };
+      
+      makeGiftCardPayment(
+        calculatedFinalTotal, // Use the calculated final total with gift card discount
+        orderInfo, 
+        () => navigate("/ordersuccess"),
+        (error) => console.error("Payment failed:", error),
+        "card"
+      );
+    } else {
+      navigate("/ordersuccess");
+    }
   };
 
   const handlePaymentMethodChange = (method) => {
@@ -116,37 +161,46 @@ const Payment = () => {
 
   const handleGiftCardApply = (amount) => {
     setGiftCardApplied(true);
-    setGiftCardDiscount(amount);
+    setGiftCardDiscount(parseInt(amount));
   };
   
   const bagData = useSelector((state) => state.bag.bagData);
 
+  // Add fallback logic if bagData is empty
   let totalAmount = 0;
-  bagData?.map(
-    (e) =>
-      (totalAmount += Math.floor(
-        Number(e.off_price) * ((100 - Number(e.discount)) / 100)
-      ))
-  );
-
   let totalMRP = 0;
-  bagData?.map((e) => (totalMRP += Math.floor(Number(e.off_price))));
+
+  // Check if bagData has items
+  if (bagData && bagData.length > 0) {
+    bagData.forEach((e) => {
+      totalMRP += Math.floor(Number(e.off_price || 0));
+      totalAmount += Math.floor(Number(e.off_price) * ((100 - Number(e.discount)) / 100));
+    });
+  } else {
+    // Fallback to cartTotal if bagData is empty
+    totalMRP = cartTotal || 0;
+    totalAmount = finalTotal || cartTotal || 0;
+  }
 
   let totalDiscount = totalMRP - totalAmount;
   
-  // Calculate final total after gift card discount
-  const finalTotal = totalAmount - giftCardDiscount > 0 ? totalAmount - giftCardDiscount : 0;
+  // Fix the payment methods with proper labels
+  const paymentMethods = [
+    { id: "cod", label: "Cash On Delivery", icon: CurrencyRupeeOutlined },
+    { id: "credit-debit", label: "Credit/Debit Card", icon: CreditCardOutlined },
+    { id: "upi", label: "GooglePay/PhonePay/UPI", icon: QrCodeScanner },
+    { id: "wallet", label: "Paytm/Payzapp/Wallets", icon: AccountBalanceWalletOutlined },
+    { id: "netbanking", label: "Net Banking", icon: AccountBalanceOutlined },
+    { id: "emi", label: "EMI/Pay Later", icon: PaymentsOutlined },
+    { id: "giftcard", label: "Gift Card", icon: CardGiftcard }
+  ];
 
-  // Fix the selection highlight for gift card
-  const getPaymentMethodColor = (method) => {
-    return selectedPaymentMethod === method ? "#ff3f6c" : "";
-  };
+  // Calculate the final amount after gift card discount
+  const calculatedFinalTotal = Math.max(0, totalAmount - giftCardDiscount);
   
-  const getPaymentMethodStyle = (method) => {
-    return {
-      backgroundColor: selectedPaymentMethod === method ? "#fff1f4" : "",
-      borderLeft: selectedPaymentMethod === method ? "5px solid #ff3f6c" : "",
-    };
+  // Icon color based on selection
+  const getIconColor = (method) => {
+    return selectedPaymentMethod === method ? "#ff3f6c" : "#777";
   };
 
   // Styled component for payment method options
@@ -160,11 +214,6 @@ const Payment = () => {
     align-items: center;
     transition: all 0.3s ease;
   `;
-  
-  // Icon color based on selection
-  const getIconColor = (method) => {
-    return selectedPaymentMethod === method ? "#ff3f6c" : "#777";
-  };
 
   return (
     <Container>
@@ -249,95 +298,36 @@ const Payment = () => {
           <ChooseMode>Choose Payment Mode</ChooseMode>
           <PayemntMain>
             <PaymentMethods>
-              <PaymentMethodOption 
-                selected={selectedPaymentMethod === "cod"}
-                onClick={() => handlePaymentMethodChange("cod")}
-              >
-                <CurrencyRupeeOutlined sx={{ 
-                  width: "25px", 
-                  height: "25px",
-                  color: getIconColor("cod")
-                }} />
-                <Cod>Cash On Delivery</Cod>
-              </PaymentMethodOption>
-              
-              <PaymentMethodOption 
-                selected={selectedPaymentMethod === "credit-debit"}
-                onClick={() => handlePaymentMethodChange("credit-debit")}
-              >
-                <CreditCardOutlined
-                  sx={{ 
-                    width: "25px", 
-                    height: "25px", 
-                    color: getIconColor("credit-debit") 
-                  }}
-                />
-                <CardCD>Credit/Debit Card</CardCD>
-              </PaymentMethodOption>
-              
-              <PaymentMethodOption 
-                selected={selectedPaymentMethod === "upi"}
-                onClick={() => handlePaymentMethodChange("upi")}
-              >
-                <QrCodeScanner sx={{ 
-                  width: "25px", 
-                  height: "25px",
-                  color: getIconColor("upi")
-                }} />
-                <Upi>GooglePay/PhonePay/Upi</Upi>
-              </PaymentMethodOption>
-              
-              <PaymentMethodOption 
-                selected={selectedPaymentMethod === "wallet"}
-                onClick={() => handlePaymentMethodChange("wallet")}
-              >
-                <AccountBalanceWalletOutlined
-                  sx={{ 
-                    width: "25px", 
-                    height: "25px",
-                    color: getIconColor("wallet")
-                  }}
-                />
-                <Wallet>Paytm/Payzapp/Wallets</Wallet>
-              </PaymentMethodOption>
-              
-              <PaymentMethodOption 
-                selected={selectedPaymentMethod === "netbanking"}
-                onClick={() => handlePaymentMethodChange("netbanking")}
-              >
-                <AccountBalanceOutlined
-                  sx={{ 
-                    width: "25px", 
-                    height: "25px",
-                    color: getIconColor("netbanking")
-                  }}
-                />
-                <NetBank>Net Banking</NetBank>
-              </PaymentMethodOption>
-              
-              <PaymentMethodOption 
-                selected={selectedPaymentMethod === "emi"}
-                onClick={() => handlePaymentMethodChange("emi")}
-              >
-                <PaymentsOutlined sx={{ 
-                  width: "25px", 
-                  height: "25px",
-                  color: getIconColor("emi")
-                }} />
-                <Emi>EMI/Pay Later</Emi>
-              </PaymentMethodOption>
-              
-              <PaymentMethodOption 
-                selected={selectedPaymentMethod === "giftcard"}
-                onClick={() => handlePaymentMethodChange("giftcard")}
-              >
-                <CardGiftcard sx={{ 
-                  width: "25px", 
-                  height: "25px", 
-                  color: getIconColor("giftcard") 
-                }} />
-                <Emi>Gift Card</Emi>
-              </PaymentMethodOption>
+              {paymentMethods.map(method => (
+                <PaymentMethodOption 
+                  key={method.id}
+                  selected={selectedPaymentMethod === method.id}
+                  onClick={() => handlePaymentMethodChange(method.id)}
+                >
+                  <method.icon 
+                    sx={{ 
+                      width: "25px", 
+                      height: "25px",
+                      color: getIconColor(method.id)
+                    }} 
+                  />
+                  {method.id === "cod" ? (
+                    <Cod>{method.label}</Cod>
+                  ) : method.id === "credit-debit" ? (
+                    <CardCD>{method.label}</CardCD>
+                  ) : method.id === "upi" ? (
+                    <Upi>{method.label}</Upi>
+                  ) : method.id === "wallet" ? (
+                    <Wallet>{method.label}</Wallet>
+                  ) : method.id === "netbanking" ? (
+                    <NetBank>{method.label}</NetBank>
+                  ) : method.id === "emi" ? (
+                    <Emi>{method.label}</Emi>
+                  ) : (
+                    <Emi>{method.label}</Emi>
+                  )}
+                </PaymentMethodOption>
+              ))}
             </PaymentMethods>
             
             {selectedPaymentMethod === "credit-debit" && (
@@ -374,19 +364,22 @@ const Payment = () => {
                     required
                   />
                 </ExpiryCvv>
-                <PayNowButton type="submit" />
+                <PayNowButton type="submit" value={`PAY NOW ₹${calculatedFinalTotal}`} />
               </PaymentMethodsInput>
             )}
             
             {selectedPaymentMethod === "giftcard" && (
-              <GiftCard onApply={handleGiftCardApply} totalAmount={totalAmount} />
+              <GiftCard 
+                onApply={handleGiftCardApply} 
+                totalAmount={totalAmount}
+              />
             )}
             
             {selectedPaymentMethod !== "credit-debit" && selectedPaymentMethod !== "giftcard" && (
               <PaymentMethodsInput onSubmit={handleSubmit}>
                 <ChooseMode>{selectedPaymentMethod.toUpperCase().replace("-", " ")}</ChooseMode>
                 <p>Payment method details would be here</p>
-                <PayNowButton type="submit" />
+                <PayNowButton type="submit" value={`PAY NOW ₹${calculatedFinalTotal}`} />
               </PaymentMethodsInput>
             )}
           </PayemntMain>
@@ -402,11 +395,11 @@ const Payment = () => {
         <FormRightDiv>
           <AllPriceDiv>
             <PriceDetailsT>
-              PRICE DETAILS ({bagData.length} Items)
+              PRICE DETAILS ({itemCount} Items)
             </PriceDetailsT>
             <TmrpDiv>
               <Tmrp>TOTAL MRP</Tmrp>
-              <Tmrprs>₹{totalMRP}</Tmrprs>
+              <Tmrprs>₹{totalMRP}</Tmrprs> {/* Change from totalAmount to totalMRP */}
             </TmrpDiv>
             <DmrpDiv>
               <Dmrp>Discount on MRP</Dmrp>
@@ -416,7 +409,7 @@ const Payment = () => {
               <CoupDis>Coupon Discount</CoupDis>
               <CoupDisrs>Apply Coupon</CoupDisrs>
             </CoupDisDiv>
-            {giftCardApplied && (
+            {giftCardApplied && giftCardDiscount > 0 && (
               <DmrpDiv>
                 <Dmrp>Gift Card Discount</Dmrp>
                 <Dmrprs>-₹{giftCardDiscount}</Dmrprs>
@@ -431,16 +424,15 @@ const Payment = () => {
           <TotalPriceDiv>
             <TotalAmountdiv>
               <TotalAmount>Total Amount</TotalAmount>
-              <TotalAmountrs>₹{finalTotal}</TotalAmountrs>
+              <TotalAmountrs>₹{calculatedFinalTotal}</TotalAmountrs>
             </TotalAmountdiv>
           </TotalPriceDiv>
         </FormRightDiv>
       </FullpayemntPage>
-
+      
       <CartFoot />
     </Container>
   );
 };
 
 export default Payment;
-
