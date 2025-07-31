@@ -49,7 +49,7 @@ export const makeWoohooPaymentXHR = async () => {
         xhr.setRequestHeader('Content-Type', 'application/json');
         
         // Add timeout to prevent hanging indefinitely
-        xhr.timeout = 5000; // 5 seconds timeout
+        xhr.timeout = 15000; // Increase timeout to 15 seconds
         
         xhr.onload = function() {
           if (xhr.status >= 200 && xhr.status < 300) {
@@ -73,14 +73,14 @@ export const makeWoohooPaymentXHR = async () => {
           }
         };
         
-        xhr.onerror = function() {
-          console.error("XHR network error - falling back to simulated response");
-          provideSimulatedResponse();
+        xhr.onerror = function(e) {
+          console.error("XHR network error", e);
+          reject({ success: false, error: "Network error" });
         };
-        
+
         xhr.ontimeout = function() {
-          console.error("XHR request timed out - proxy server may not be running");
-          provideSimulatedResponse();
+          console.error("XHR request timed out - proxy server may not be responding fast enough");
+          reject({ success: false, error: "Request timed out" });
         };
         
         const payload = JSON.stringify({

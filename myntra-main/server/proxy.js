@@ -37,7 +37,9 @@ app.post('/api/woohoo/orders', async (req, res) => {
     });
     
     console.log('Woohoo API response:', response.data);
-    
+
+    // Log before sending response
+    console.log('Sending response back to frontend');
     // Return the API response to the frontend
     res.json(response.data);
   } catch (error) {
