@@ -117,7 +117,7 @@ const CartPage = () => {
   
   // Calculate additional values
   const deliveryCharge = cartTotal > 799 ? 0 : 99;
-  const discount = Math.floor(cartTotal * 0.1); // Example: 10% discount
+  const discount = 0; // Example: 10% discount
   const totalAmount = cartTotal + deliveryCharge - discount;
   
   // Force recalculation of cart total using correct quantities

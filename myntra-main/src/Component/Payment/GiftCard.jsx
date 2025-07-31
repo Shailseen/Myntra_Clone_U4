@@ -833,8 +833,7 @@ const DummyCCAvenue = styled.div`
       {!appliedCard && addAmountGiftCards && addAmountGiftCards.length > 0 && (
         <GiftCardList>
           {addAmountGiftCards.map(card => (
-            <GiftCardItem key={card.id} style={{ backgroundColor: '#f5f5f6', '&:hover': {
-    borderColor: '#888', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'}}}>
+            <GiftCardItem key={card.id} style={{ backgroundColor: '#f5f5f6' }}>
               <CardImage color={card.color}>
                 <CardGiftcard sx={{ fontSize: 20, color: '#ff3f6c' }} />
               </CardImage>
@@ -851,7 +850,7 @@ const DummyCCAvenue = styled.div`
                   ))}
                 </CardOffers>
                 <DiscountPreview>
-                  Add ₹{card.value.toFixed(2)} more to your cart to unlock this gift card!
+                  Add ₹{card.value && card.value.toFixed ? card.value.toFixed(2) : card.value} more to your cart to unlock this gift card!
                 </DiscountPreview>
                 <NetPayablePreview>
                   Minimum order: ₹{card.minAmount}
@@ -874,7 +873,7 @@ const DummyCCAvenue = styled.div`
       ) : (
         // add a condition if isLoading then this will not render
         <>
-          {isLoading && (
+          {!isLoading && addAmountGiftCards.length === 0 && availableCards.length === 0 && (
             // show a message no gift cards available
             <p style={{ color: '#ff3f6c', fontWeight: 'bold', textAlign: 'center' }}>
               No gift cards available.

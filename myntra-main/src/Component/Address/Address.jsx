@@ -81,7 +81,7 @@ const Address = () => {
   let totalMRP = 0;
   cartItems?.forEach((e) => (totalMRP += Math.floor(Number(e.price))));
 
-  let totalDiscount = totalMRP - totalAmount;
+  let totalDiscount = 0;
   const goToPayment = () => {
     navigate("/payment");
   };

@@ -146,7 +146,7 @@ const Payment = () => {
     totalAmount = finalTotal || cartTotal || 0;
   }
 
-  let totalDiscount = totalMRP - totalAmount;
+  let totalDiscount = 0;
   
   // Calculate the final amount after gift card discount
   const calculatedFinalTotal = Math.max(0, totalAmount - giftCardDiscount);
@@ -167,134 +167,89 @@ const Payment = () => {
     const fetchGiftCards = async () => {
       setIsLoadingGiftCards(true);
       setGiftCardError(null);
-      
+
       try {
         console.log("Fetching gift cards on payment page load...");
         console.log('env value ', process.env.REACT_APP_BACKEND_API);
         
-        
-        // Try to use the proxy server API call
         const apiUrl = `${API_BASE_URL}/api/giftcards/search`;
-        
         const payload = {
           "amount": totalAmount,
-          "code": "Myntra"  // Empty code to get all available cards
-        };
-        
-        console.log("Sending gift card request with payload:", payload);
-        
-        try {
-          // First test if the proxy server is available
-          const testResponse = await fetch(`${API_BASE_URL}/api/test`);
-          if (!testResponse.ok) {
-            throw new Error('Proxy server test failed');
-          }
-          
-          // If test is successful, proceed with the actual API call
-          const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-          });
-          
-          if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-          }
-          
-          const data = await response.json();
-          console.log("Gift card API response on page load:", data);
-          
-          // Process the API response
-          if (data && data.hits && data.hits.hits && Array.isArray(data.hits.hits)) {
-            if (data.hits.hits.length > 0) {
-              // Transform API data to gift card format
-              const apiCards = data.hits.hits.map((hit, index) => {
-                const source = hit._source || {};
-                return {
-                  id: hit._id || `api-${index}`,
-                  name: source.name || 'Gift Card',
-                  value: Math.abs(totalAmount - hit.sort),
-                  code: source.id || `GC-${index + 1000}`,
-                  color: ['#ffeae9', '#fff1e0', '#e9f7ff', '#edfff0'][index % 4],
-                  offers: [
-                    `${source.description?.substring(0, 15) || 'Gift Card'}`
-                  ]
-                };
-              });
-              
-              setAvailableGiftCards(apiCards);
-              console.log("Using API gift cards:", apiCards);
-            } else {
-              console.log("No gift cards found in API response, using mock data");
-              setAvailableGiftCards(mockGiftCards);
-            }
-          } else {
-            console.log("Unexpected API response format, using mock data");
-            setAvailableGiftCards(mockGiftCards);
-          }
-        } catch (apiError) {
-          console.error("API call failed:", apiError);
-          console.log("Falling back to mock gift card data");
-          setAvailableGiftCards(mockGiftCards);
-        }
-      } catch (err) {
-        console.error("Error in gift card fetch process:", err);
-        setGiftCardError(err.message);
-        // Fall back to mock cards on error
-        setAvailableGiftCards(mockGiftCards);
-      } finally {
-        setIsLoadingGiftCards(false);
-      }
-    };
-    
-    // Call the fetch function
-    fetchGiftCards();
-
-    // New: Fetch "add amount" gift cards
-    const fetchAddAmountGiftCards = async () => {
-      try {
-        const apiUrl = `${API_BASE_URL}/api/giftcards/search`;
-        // Example: ask for cards with higher value than totalAmount
-        const payload = {
-          "amount": totalAmount, // or any logic to get higher value cards
           "code": "Myntra"
         };
+
+        console.log("Sending gift card request with payload:", payload);
+        
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.hits && data.hits.hits && Array.isArray(data.hits.hits)) {
-            // Filter cards that require more than current totalAmount
-            const addCards = data.hits.hits
-              .filter(hit => (hit.sort || 0) > totalAmount)
-              .map((hit, index) => {
-                const source = hit._source || {};
-                return {
-                  id: hit._id || `addapi-${index}`,
-                  name: source.name || 'Gift Card',
-                  value: Math.abs(totalAmount - hit.sort),
-                  code: source.id || `GC-${index + 2000}`,
-                  color: ['#f0e9ff', '#e0f7fa', '#fffde7', '#fce4ec'][index % 4],
-                  offers: [
-                    `${source.description?.substring(0, 15) || 'Gift Card'}`
-                  ],
-                  minAmount: hit.sort || 0
-                };
-              });
-            setAddAmountGiftCards(addCards);
-          }
+
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+
+        const data = await response.json();
+        // --- DEBUG: Log the hits with their _isSuggestion flag
+        if (data && data.hits && data.hits.hits && Array.isArray(data.hits.hits)) {
+          console.log("Gift card API hits:", data.hits.hits.map(h => ({
+            id: h._id,
+            _isSuggestion: h._isSuggestion,
+            sort: h.sort,
+            name: h._source?.name
+          })));
+          // --- END DEBUG
+
+          // FIX: Use strict comparison for _isSuggestion flag (it may be boolean or string)
+          const searchHits = data.hits.hits.filter(hit => hit._isSuggestion === false || hit._isSuggestion === "false");
+          const suggestionHits = data.hits.hits.filter(hit => hit._isSuggestion === true || hit._isSuggestion === "true");
+
+          // Map to card format
+          const apiCards = searchHits.map((hit, index) => {
+            const source = hit._source || {};
+            return {
+              id: hit._id || `api-${index}`,
+              name: source.name || 'Gift Card',
+              value: Math.abs(totalAmount - hit.sort),
+              code: source.id || `GC-${index + 1000}`,
+              color: ['#ffeae9', '#fff1e0', '#e9f7ff', '#edfff0'][index % 4],
+              offers: [
+                `${source.description?.substring(0, 15) || 'Gift Card'}`
+              ]
+            };
+          });
+
+          const addCards = suggestionHits.map((hit, index) => {
+            const source = hit._source || {};
+            return {
+              id: hit._id || `addapi-${index}`,
+              name: source.name || 'Gift Card',
+              value: Math.abs((hit.sort || 0) - totalAmount),
+              code: source.id || `GC-${index + 2000}`,
+              color: ['#f0e9ff', '#e0f7fa', '#fffde7', '#fce4ec'][index % 4],
+              offers: [
+                `${source.description?.substring(0, 15) || 'Gift Card'}`
+              ],
+              minAmount: hit.sort || 0
+            };
+          });
+
+          setAvailableGiftCards(apiCards);
+          setAddAmountGiftCards(addCards);
+        } else {
+          setAvailableGiftCards(mockGiftCards);
+          setAddAmountGiftCards([]);
         }
       } catch (err) {
+        setGiftCardError(err.message);
+        setAvailableGiftCards(mockGiftCards);
         setAddAmountGiftCards([]);
+      } finally {
+        setIsLoadingGiftCards(false);
       }
     };
-    fetchAddAmountGiftCards();
-  }, [totalAmount]); // Re-fetch when total amount changes
+
+    fetchGiftCards();
+  }, [totalAmount]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

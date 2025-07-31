@@ -55,7 +55,7 @@ const CartRightS = ({ totalItems, totalAmount: propTotalAmount }) => {
     (e) => (totalMRP += Math.floor(Number(e.price)))
   );
 
-  let totalDiscount = totalMRP - totalAmount;
+  let totalDiscount = 0;
 
   const placeOrder = () => {
     navigate("/address");

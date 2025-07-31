@@ -97,7 +97,7 @@ app.post('/api/giftcards/search', async (req, res) => {
     };
 
     // log the response of suggestion
-    console.log('Gift card API suggestion response:', suggestionResponse.data.hits.hits);
+    console.log('Gift card API suggestion response:', combinedResponse.hits.hits);
     console.log('Combined gift card API hits:', combinedHits.length);
 
     // Return the combined response to the frontend
