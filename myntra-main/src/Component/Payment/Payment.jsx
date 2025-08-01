@@ -214,7 +214,9 @@ const Payment = () => {
               color: ['#ffeae9', '#fff1e0', '#e9f7ff', '#edfff0'][index % 4],
               offers: [
                 `${source.description?.substring(0, 15) || 'Gift Card'}`
-              ]
+              ],
+              // Add the baseUrl from the source
+              baseUrl: source.baseUrl || null
             };
           });
 
@@ -223,13 +225,17 @@ const Payment = () => {
             return {
               id: hit._id || `addapi-${index}`,
               name: source.name || 'Gift Card',
-              value: Math.abs((hit.sort || 0) - totalAmount),
+              value: Math.abs(source.minimumOrderValue-totalAmount ?? 0),
               code: source.id || `GC-${index + 2000}`,
               color: ['#f0e9ff', '#e0f7fa', '#fffde7', '#fce4ec'][index % 4],
               offers: [
                 `${source.description?.substring(0, 15) || 'Gift Card'}`
               ],
-              minAmount: hit.sort || 0
+              minAmount: source.minimumOrderValue || 0,
+              discountType: source.discountType,
+              discountValue: source.discountValue,
+              // Add the baseUrl from the source
+              baseUrl: source.baseUrl || null
             };
           });
 

@@ -553,25 +553,50 @@ const GiftCard = ({
   const netPayable = Math.max(0, totalAmount - (appliedCard?.value || 0));
 
   // Add a function to handle payment
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (appliedCard) {
       setIsProcessingPayment(true);
+      
+      try {
+        // Call the Woohoo payment API with the netPayable amount
+        console.log("Calling makeWoohooPaymentXHR with amount:", netPayable);
+        const paymentResult = await makeWoohooPaymentXHR(netPayable);
+        console.log("Payment API response:", paymentResult);
+        
+        // Continue with existing UI flow regardless of API response
+        // Show payment overlay
+        setShowPaymentIframe(true);
+        setPaymentCountdown(10); // 10 seconds
 
-      // For demo: show payment overlay
-      setShowPaymentIframe(true);
-      setPaymentCountdown(10); // 10 seconds
+        countdownTimerRef.current = setInterval(() => {
+          setPaymentCountdown(prev => {
+            if (prev <= 1) {
+              clearInterval(countdownTimerRef.current);
+              setShowPaymentIframe(false);
+              navigate('/ordersuccess');
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      } catch (error) {
+        console.error("Payment API error:", error);
+        // Continue with UI flow even if API fails
+        setShowPaymentIframe(true);
+        setPaymentCountdown(10);
 
-      countdownTimerRef.current = setInterval(() => {
-        setPaymentCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(countdownTimerRef.current);
-            setShowPaymentIframe(false);
-            navigate('/ordersuccess');
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+        countdownTimerRef.current = setInterval(() => {
+          setPaymentCountdown(prev => {
+            if (prev <= 1) {
+              clearInterval(countdownTimerRef.current);
+              setShowPaymentIframe(false);
+              navigate('/ordersuccess');
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
     }
   };
 
@@ -752,9 +777,20 @@ const DummyCCAvenue = styled.div`
           <GiftCardList>
             {availableCards.map(card => (
               <GiftCardItem key={card.id}>
-                <CardImage color={card.color}>
-                  <CardGiftcard sx={{ fontSize: 20, color: '#ff3f6c' }} />
-                </CardImage>
+                {/* Show image if available, else fallback to icon */}
+                {card.baseUrl ? (
+                  <CardImage color={card.color}>
+                    <img
+                      src={card.baseUrl}
+                      alt={card.name}
+                      style={{ width: 36, height: 36, borderRadius: 4, objectFit: "cover" }}
+                    />
+                  </CardImage>
+                ) : (
+                  <CardImage color={card.color}>
+                    <CardGiftcard sx={{ fontSize: 20, color: '#ff3f6c' }} />
+                  </CardImage>
+                )}
                 <CardContent>
                   <CardInfo>
                     <CardName>{card.name}</CardName>
@@ -784,9 +820,6 @@ const DummyCCAvenue = styled.div`
             ))}
           </GiftCardList>
           {successMessage && <SuccessMessage>{successMessage}</SuccessMessage>}
-          
-        
-        
         </>
       ) : (
         <>
@@ -834,9 +867,20 @@ const DummyCCAvenue = styled.div`
         <GiftCardList>
           {addAmountGiftCards.map(card => (
             <GiftCardItem key={card.id} style={{ backgroundColor: '#f5f5f6' }}>
-              <CardImage color={card.color}>
-                <CardGiftcard sx={{ fontSize: 20, color: '#ff3f6c' }} />
-              </CardImage>
+              {/* Show image if available, else fallback to icon */}
+              {card.baseUrl ? (
+                <CardImage color={card.color}>
+                  <img
+                    src={card.baseUrl}
+                    alt={card.name}
+                    style={{ width: 36, height: 36, borderRadius: 4, objectFit: "cover" }}
+                  />
+                </CardImage>
+              ) : (
+                <CardImage color={card.color}>
+                  <CardGiftcard sx={{ fontSize: 20, color: '#ff3f6c' }} />
+                </CardImage>
+              )}
               <CardContent>
                 <CardInfo>
                   <CardName>{card.name}</CardName>
@@ -850,7 +894,7 @@ const DummyCCAvenue = styled.div`
                   ))}
                 </CardOffers>
                 <DiscountPreview>
-                  Add ₹{card.value && card.value.toFixed ? card.value.toFixed(2) : card.value} more to your cart to unlock this gift card!
+                  Add ₹{card.value && card.value.toFixed ? card.value.toFixed(2) : card.value} more to get {card.discountType=='flat' ?? 'flat ₹'}{card.discountValue}{card.discountType == 'percentage' ? '% discount' : 'off'}
                 </DiscountPreview>
                 <NetPayablePreview>
                   Minimum order: ₹{card.minAmount}
@@ -867,7 +911,7 @@ const DummyCCAvenue = styled.div`
       )}
 
       {!appliedCard && (addAmountGiftCards.length > 0 || availableCards.length > 0) ? (
-        <PayNowButton disabled={true}>
+        <PayNowButton onClick={handlePayment} disabled={true}>
             PAY NOW
           </PayNowButton>
       ) : (
