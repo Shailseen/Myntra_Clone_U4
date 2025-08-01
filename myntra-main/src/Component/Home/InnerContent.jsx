@@ -17,6 +17,8 @@ import { SlideShow } from "./Slider";
 import TopPicks from "./TopPicks";
 import { products } from "../../data/products"; // <-- import your mock products
 import { addToCart } from "../../redux/cartSlice"; // <-- if using redux cartSlice for add to cart
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const divStyle = {
   textAlign: "start",
@@ -127,15 +129,27 @@ function InnerContent() {
       console.log("Adding product with quantity:", productWithQuantity);
       dispatch(addToCart(productWithQuantity));
 
-      alert("Product added to cart successfully!");
+      // Replace alert with toast notification
+      toast.success("Product added to cart successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     } catch (error) {
       console.error("Error adding to cart:", error);
-      alert("Failed to add product to cart");
+      toast.error("Failed to add product to cart", {
+        position: "top-right",
+        autoClose: 2000,
+      });
     }
   };
 
   return (
     <div>
+      <ToastContainer />
       <SlideShow />
       <div
         style={{
