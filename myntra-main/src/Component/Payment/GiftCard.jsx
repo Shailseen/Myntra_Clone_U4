@@ -401,6 +401,13 @@ const GiftCard = ({
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentCountdown, setPaymentCountdown] = useState(10); // 10 seconds
   
+  // Add state for payment response details
+  const [paymentResponse, setPaymentResponse] = useState({
+    orderId: 'APCP2323000232', // Default fallback
+    refNo: '',
+    status: ''
+  });
+
   const iframeRef = useRef(null);
   const countdownTimerRef = useRef(null);
 
@@ -565,6 +572,14 @@ const GiftCard = ({
         console.log("Payment API response:", paymentResult);
         
         if (paymentResult.success) {
+          // Store the payment response information
+          const responseData = paymentResult.data || {};
+          setPaymentResponse({
+            orderId: responseData.orderId || 'ORD' + Math.floor(Math.random() * 1000000),
+            refNo: responseData.refNo || '',
+            status: responseData.status || 'PENDING'
+          });
+
           // For demo: show payment overlay
           setShowPaymentIframe(true);
           setPaymentCountdown(10); // 10 seconds
@@ -924,8 +939,8 @@ const DummyCCAvenue = styled.div`
           {/* QR and payment box are rendered ONCE, only timer text updates */}
           <DummyUPIPaymentBox>
             <DummyHeader>
-              <DummyBrand>MALAYSIA AIRLINES BERHAD</DummyBrand>
-              <DummyOrder>Order ID : APCP2323000232</DummyOrder>
+              <DummyBrand>RAZORPAY PVT LMTD</DummyBrand>
+              <DummyOrder>Order ID : {paymentResponse.orderId}</DummyOrder>
               <DummyAmt>₹ {netPayable}.00</DummyAmt>
             </DummyHeader>
             <DummyPaySection>
