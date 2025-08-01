@@ -31,13 +31,13 @@ export const initializeRazorpay = () => {
   });
 };
 
-// Alternative function using XMLHttpRequest instead of fetch
-export const makeWoohooPaymentXHR = async () => {
+// Modified to accept amount parameter
+export const makeWoohooPaymentXHR = async (amount = 100) => {
   return new Promise((resolve, reject) => {
     try {
       const refNo = getRandomString();
 
-      console.log("Making XHR payment with reference number:", refNo);
+      console.log("Making XHR payment with reference number:", refNo, "and amount:", amount);
 
       // Check if proxy server is running
       const useProxy = true; // Set to true when your proxy server is running
@@ -116,7 +116,7 @@ export const makeWoohooPaymentXHR = async () => {
           "payments": [
             {
               "code": "amadeuscheckout",
-              "amount": 100,
+              "amount": amount, // Use the passed amount parameter
               "po_number": "12345"
             }
           ],
@@ -125,7 +125,7 @@ export const makeWoohooPaymentXHR = async () => {
           "products": [
             {
               "sku": "titanegiftcard",
-              "price": 100,
+              "price": amount, // Use the passed amount parameter
               "qty": 1,
               "currency": "356",
               "cardNumber": "21321412341",
@@ -160,7 +160,7 @@ export const makeWoohooPaymentXHR = async () => {
               products: [
                 {
                   sku: "titanegiftcard",
-                  price: 100,
+                  price: amount, // Use the passed amount parameter
                   qty: 1
                 }
               ]
@@ -175,11 +175,11 @@ export const makeWoohooPaymentXHR = async () => {
   });
 };
 
-// New simplified function that only calls the Woohoo API
-export const processPaymentOnly = async (onApiSuccess, onApiFailure) => {
+// Update processPaymentOnly to pass the amount
+export const processPaymentOnly = async (amount, onApiSuccess, onApiFailure) => {
   try {
-    console.log("Processing payment - API call only");
-    const result = await makeWoohooPaymentXHR();
+    console.log("Processing payment - API call only with amount:", amount);
+    const result = await makeWoohooPaymentXHR(amount);
     
     if (result.success) {
       console.log("API call completed successfully");
@@ -200,10 +200,10 @@ export const processPaymentOnly = async (onApiSuccess, onApiFailure) => {
 // Modified version of makeGiftCardPayment that doesn't proceed to Razorpay
 export const makeGiftCardPayment = async (amount, orderInfo, onSuccess, onFailure, paymentMethod) => {
   try {
-    console.log("Starting gift card payment process - API call only");
+    console.log("Starting gift card payment process - API call only with amount:", amount);
     
     // Only make the Woohoo API call without proceeding to Razorpay
-    const woohooResult = await makeWoohooPaymentXHR();
+    const woohooResult = await makeWoohooPaymentXHR(amount);
 
     // Log the result but DO NOT call onSuccess callback which might be triggering the redirect
     console.log("Woohoo payment API call result:", woohooResult);
@@ -219,18 +219,18 @@ export const makeGiftCardPayment = async (amount, orderInfo, onSuccess, onFailur
   }
 };
 
-// New function that can be used instead of makeGiftCardPayment to avoid any redirects
-export const testApiCallOnly = async () => {
+// Update testApiCallOnly to accept and pass the amount
+export const testApiCallOnly = async (amount = 100) => {
   try {
-    console.log("Making API call test only - no callbacks or redirects");
+    console.log("Making API call test only - with amount:", amount);
     // Add a delay to ensure we can see the API call in progress
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    const result = await makeWoohooPaymentXHR();
+    const result = await makeWoohooPaymentXHR(amount);
     console.log("API call completed with result:", result);
     
     // Alert to show the result visually
-    alert("API call completed. Check console for details.");
+    alert("API call completed with amount: " + amount + ". Check console for details.");
     
     return result;
   } catch (error) {

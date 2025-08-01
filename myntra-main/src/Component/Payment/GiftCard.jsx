@@ -558,44 +558,36 @@ const GiftCard = ({
       setIsProcessingPayment(true);
       
       try {
-        // Call the Woohoo payment API with the netPayable amount
-        console.log("Calling makeWoohooPaymentXHR with amount:", netPayable);
+        // Call the makeWoohooPaymentXHR function with the netPayable amount
+        console.log("Initiating payment with Woohoo API for amount:", netPayable);
         const paymentResult = await makeWoohooPaymentXHR(netPayable);
+        
         console.log("Payment API response:", paymentResult);
         
-        // Continue with existing UI flow regardless of API response
-        // Show payment overlay
-        setShowPaymentIframe(true);
-        setPaymentCountdown(10); // 10 seconds
+        if (paymentResult.success) {
+          // For demo: show payment overlay
+          setShowPaymentIframe(true);
+          setPaymentCountdown(10); // 10 seconds
 
-        countdownTimerRef.current = setInterval(() => {
-          setPaymentCountdown(prev => {
-            if (prev <= 1) {
-              clearInterval(countdownTimerRef.current);
-              setShowPaymentIframe(false);
-              navigate('/ordersuccess');
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
+          countdownTimerRef.current = setInterval(() => {
+            setPaymentCountdown(prev => {
+              if (prev <= 1) {
+                clearInterval(countdownTimerRef.current);
+                setShowPaymentIframe(false);
+                navigate('/ordersuccess');
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        } else {
+          alert("Payment processing failed: " + (paymentResult.error || "Unknown error"));
+          setIsProcessingPayment(false);
+        }
       } catch (error) {
-        console.error("Payment API error:", error);
-        // Continue with UI flow even if API fails
-        setShowPaymentIframe(true);
-        setPaymentCountdown(10);
-
-        countdownTimerRef.current = setInterval(() => {
-          setPaymentCountdown(prev => {
-            if (prev <= 1) {
-              clearInterval(countdownTimerRef.current);
-              setShowPaymentIframe(false);
-              navigate('/ordersuccess');
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
+        console.error("Payment error:", error);
+        alert("Payment error: " + (error.message || "Unknown error"));
+        setIsProcessingPayment(false);
       }
     }
   };
