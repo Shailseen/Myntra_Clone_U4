@@ -4,6 +4,58 @@ import { CardGiftcard, LocalOfferOutlined } from "@mui/icons-material";
 import { makeWoohooPaymentXHR } from '../../services/RazorpayService';
 import { useNavigate } from 'react-router-dom';
 
+// Import only necessary local logo images
+import razorpayLogo from '../../assets/images/razorpay-logo-white.png';
+import gpayLogo from '../../assets/images/gpay-logo.png';
+
+// Mock gift card data with offers (fallback)
+const mockGiftCards = [
+  { 
+    id: 'gc1', 
+    name: 'Birthday Gift Card', 
+    value: 500, 
+    code: 'MYN500', 
+    color: '#ffeae9',
+    offers: [
+      'Valid on all products',
+      'Minimum amount: 2000'
+    ]
+  },
+  { 
+    id: 'gc2', 
+    name: 'Anniversary Gift Card', 
+    value: 1000, 
+    code: 'MYN1000', 
+    color: '#fff1e0',
+    offers: [
+      'Valid for 1 year from purchase',
+      'Can be used with other offers'
+    ]
+  },
+  { 
+    id: 'gc3', 
+    name: 'Special Gift Card', 
+    value: 750, 
+    code: 'MYN750', 
+    color: '#e9f7ff',
+    offers: [
+      'Applicable on premium brands',
+      'Exclusive member benefits'
+    ]
+  },
+  { 
+    id: 'gc4', 
+    name: 'Celebration Gift Card', 
+    value: 200, 
+    code: 'MYN200', 
+    color: '#edfff0',
+    offers: [
+      'Perfect for gifting',
+      'Valid on all categories'
+    ]
+  },
+];
+
 const API_BASE_URL = process.env.REACT_APP_BACKEND_API;
 
 // Styled components for GiftCard
@@ -329,54 +381,6 @@ const LoadingMessage = styled.div`
   text-align: center;
 `;
 
-// Mock gift card data with offers (fallback)
-const mockGiftCards = [
-  { 
-    id: 'gc1', 
-    name: 'Birthday Gift Card', 
-    value: 500, 
-    code: 'MYN500', 
-    color: '#ffeae9',
-    offers: [
-      'Valid on all products',
-      'Minimum amount: 2000'
-    ]
-  },
-  { 
-    id: 'gc2', 
-    name: 'Anniversary Gift Card', 
-    value: 1000, 
-    code: 'MYN1000', 
-    color: '#fff1e0',
-    offers: [
-      'Valid for 1 year from purchase',
-      'Can be used with other offers'
-    ]
-  },
-  { 
-    id: 'gc3', 
-    name: 'Special Gift Card', 
-    value: 750, 
-    code: 'MYN750', 
-    color: '#e9f7ff',
-    offers: [
-      'Applicable on premium brands',
-      'Exclusive member benefits'
-    ]
-  },
-  { 
-    id: 'gc4', 
-    name: 'Celebration Gift Card', 
-    value: 200, 
-    code: 'MYN200', 
-    color: '#edfff0',
-    offers: [
-      'Perfect for gifting',
-      'Valid on all categories'
-    ]
-  },
-];
-
 // Update the component to accept pre-fetched cards
 const GiftCard = ({ 
   onApply, 
@@ -686,90 +690,127 @@ const GiftCard = ({
 const DummyUPIPaymentBox = styled.div`
   background: #fff;
   width: 420px;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-radius: 8px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.1);
   overflow: hidden;
   margin: 40px auto;
   padding-bottom: 16px;
+  font-family: 'Inter', 'Roboto', sans-serif;
 `;
 
 const DummyHeader = styled.div`
-  background: #1746a2;
+  background: #0252cc; /* Razorpay blue */
   color: #fff;
-  padding: 18px 20px;
-  border-radius: 10px 10px 0 0;
+  padding: 20px;
 `;
 
 const DummyBrand = styled.div`
-  font-weight: bold;
-  font-size: 18px;
-  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+`;
+
+// Replace the background-image approach with a regular img element
+const DummyLogo = styled.img`
+  width: 120px;
+  height: 30px;
+  object-fit: contain;
 `;
 
 const DummyOrder = styled.div`
   font-size: 13px;
   margin-top: 6px;
+  opacity: 0.9;
 `;
 
 const DummyAmt = styled.div`
-  font-size: 18px;
-  font-weight: bold;
-  margin-top: 8px;
+  font-size: 24px;
+  font-weight: 600;
+  margin-top: 10px;
+  letter-spacing: 0.3px;
 `;
 
 const DummyPaySection = styled.div`
-  padding: 18px 20px 10px 20px;
+  padding: 20px;
 `;
 
 const DummyPayTitle = styled.div`
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  color: #222;
 `;
 
 const DummyQRBox = styled.div`
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 6px;
-  padding: 12px;
+  background: #f9fafc;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
   text-align: center;
 `;
 
 const DummyQRImg = styled.img`
-  width: 140px;
-  height: 140px;
-  margin: 0 auto 10px auto;
+  width: 180px;
+  height: 180px;
+  margin: 0 auto 15px auto;
   display: block;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 4px;
+  background: white;
 `;
 
 const DummyScanPay = styled.div`
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #222;
 `;
 
 const DummyUPIIcons = styled.div`
-  margin: 8px 0 6px 0;
-  & img { height: 22px; margin: 0 4px; vertical-align: middle; }
+  margin: 12px 0;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  
+  & img { 
+    height: 24px;
+    border-radius: 4px;
+  }
 `;
 
 const DummyExpires = styled.div`
-  color: #555;
+  color: #6b7280;
   font-size: 13px;
-  margin-top: 8px;
+  margin-top: 12px;
+  font-weight: 500;
 `;
 
 const DummyFooter = styled.div`
   text-align: center;
-  color: #888;
-  font-size: 13px;
-  margin: 18px 0 0 0;
+  color: #6b7280;
+  font-size: 12px;
+  margin: 20px 0 0 0;
+  padding: 0 20px;
 `;
 
-const DummyCCAvenue = styled.div`
+const DummySecurity = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  
+  & svg {
+    color: #0252cc;
+    font-size: 14px;
+  }
+`;
+
+const DummyPoweredBy = styled.div`
   font-size: 12px;
-  color: #888;
-  margin-top: 12px;
+  color: #6b7280;
 `;
 
   return (
@@ -936,38 +977,50 @@ const DummyCCAvenue = styled.div`
       {/* Payment iframe overlay */}
       {showPaymentIframe && (
         <PaymentIframeContainer>
-          {/* QR and payment box are rendered ONCE, only timer text updates */}
+          {/* Razorpay-styled payment UI */}
           <DummyUPIPaymentBox>
             <DummyHeader>
-              <DummyBrand>RAZORPAY PVT LMTD</DummyBrand>
-              <DummyOrder>Order ID : {paymentResponse.orderId}</DummyOrder>
-              <DummyAmt>₹ {netPayable}.00</DummyAmt>
+              <DummyBrand>
+                {/* Use local Razorpay logo image */}
+                <DummyLogo 
+                  src={razorpayLogo}
+                  alt="Razorpay"
+                />
+              </DummyBrand>
+              <DummyOrder>Order ID: {paymentResponse.orderId}</DummyOrder>
+              <DummyAmt>₹ {netPayable.toFixed(2)}</DummyAmt>
             </DummyHeader>
             <DummyPaySection>
-              <DummyPayTitle>Pay through UPI QR Code</DummyPayTitle>
+              <DummyPayTitle>Scan the QR code to pay</DummyPayTitle>
               <DummyQRBox>
                 <DummyQRImg
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=upi://pay?pa=demo@upi&pn=Demo%20Merchant&am=2000}`}
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=razorpay@okicici&pn=Razorpay&am=${netPayable}&tn=Payment for order ${paymentResponse.orderId}&cu=INR`}
                   alt="QR Code"
                 />
-                <DummyScanPay>Scan and Pay</DummyScanPay>
-                <div style={{ fontSize: 12, color: "#888" }}>
-                  Scan the QR code using any UPI app on your phone
+                <DummyScanPay>Scan QR with any UPI app</DummyScanPay>
+                <div style={{ fontSize: 13, color: "#6b7280" }}>
+                  Complete payment using your preferred UPI app
                 </div>
                 <DummyUPIIcons>
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/UPI-Logo-vector.svg" alt="UPI" />
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Paytm_logo.png" alt="Paytm" />
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/WhatsApp_Logo.svg" alt="WhatsApp" />
+                  {/* Use local asset for GPay, direct URLs for others */}
+                  <img src={gpayLogo} alt="Google Pay" />
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Paytm_Logo_%28standalone%29.svg/2560px-Paytm_Logo_%28standalone%29.svg.png" alt="Paytm" />
                 </DummyUPIIcons>
                 <DummyExpires>
-                  Expires in {paymentCountdown} sec.
+                  This QR code expires in {paymentCountdown} seconds
                 </DummyExpires>
               </DummyQRBox>
             </DummyPaySection>
             <DummyFooter>
-              <DummyCCAvenue>
-                CCAvenue<sup>®</sup> An Infibeam Avenues Product
-              </DummyCCAvenue>
+              <DummySecurity>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                </svg>
+                <span>100% Secure Payments</span>
+              </DummySecurity>
+              <DummyPoweredBy>
+                Powered by Razorpay © {new Date().getFullYear()}
+              </DummyPoweredBy>
             </DummyFooter>
           </DummyUPIPaymentBox>
           <LoadingMessage>
