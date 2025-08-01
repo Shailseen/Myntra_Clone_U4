@@ -853,7 +853,7 @@ const DummyPoweredBy = styled.div`
                     ))}
                   </CardOffers>
                   <DiscountPreview>You save: ₹{Math.min(card.value, totalAmount).toFixed(2)}</DiscountPreview>
-                  <NetPayablePreview>Net payable: ₹{Math.max(0, totalAmount - card.value)}</NetPayablePreview>
+                  <NetPayablePreview>Net payable: ₹{Math.max(0, totalAmount - card.value).toFixed(2)}</NetPayablePreview>
                 </CardContent>
                 <CardActions>
                   <CardApplyButton

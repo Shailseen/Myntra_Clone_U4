@@ -37,7 +37,7 @@ const CheckoutPage = () => {
         onApply={setGiftCardDiscount}
       />
       <div>
-        <strong>Net Payable: ₹{Math.max(cartTotal - giftCardDiscount, 0)}</strong>
+        <strong>Net Payable: ₹{Math.max(cartTotal - giftCardDiscount, 0).toFixed(2)}</strong>
       </div>
     </div>
   );
